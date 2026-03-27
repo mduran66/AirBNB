@@ -1,0 +1,1055 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Review del anfitrión</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #222222;
+      --muted: #6a6a6a;
+      --line: #ebebeb;
+      --brand: #ff385c;
+      --brand-soft: #fff1f3;
+      --card: #ffffff;
+      --shadow: 0 8px 30px rgba(0,0,0,0.08);
+      --radius: 24px;
+      --radius-sm: 16px;
+      --maxw: 760px;
+      --safe-top: max(16px, env(safe-area-inset-top));
+      --safe-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100%;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: var(--maxw);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding: var(--safe-top) 18px var(--safe-bottom);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      min-height: 40px;
+    }
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex: 0 0 auto;
+      transition: transform .16s ease, background .16s ease;
+    }
+    .back-btn:active { transform: scale(.98); }
+    .back-btn[disabled] { opacity: 0; pointer-events: none; }
+
+    .progress-wrap {
+      flex: 1;
+      height: 6px;
+      background: #f2f2f2;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff385c 0%, #ff5a7c 100%);
+      border-radius: inherit;
+      transition: width .32s ease;
+    }
+
+    .step-label {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+      min-width: 78px;
+      text-align: right;
+    }
+
+    .screen {
+      display: none;
+      flex: 1;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .28s ease, transform .28s ease;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hero-card, .question-card, .result-card, .loader-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 20px;
+      align-content: center;
+      flex: 1;
+      padding: 10px 0 18px;
+    }
+
+    .hero-photo {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 28px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #ffe6eb, #fff6f7);
+      border: 1px solid #f6d6dd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .hero-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .hero-badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 6px 20px rgba(0,0,0,.08);
+    }
+
+    .host-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .host-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 2px solid #fff;
+      box-shadow: 0 8px 24px rgba(0,0,0,.10);
+      flex: 0 0 auto;
+      background: #f2f2f2;
+    }
+
+    .host-meta {
+      display: grid;
+      gap: 2px;
+    }
+
+    .host-kicker {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .host-name {
+      font-size: 16px;
+      font-weight: 650;
+      color: var(--text);
+    }
+
+    h1, h2 {
+      margin: 0;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    h1 {
+      font-size: clamp(32px, 6vw, 48px);
+      font-weight: 700;
+    }
+
+    h2 {
+      font-size: clamp(28px, 5vw, 38px);
+      font-weight: 650;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.5;
+    }
+
+    .question-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 8px 0 20px;
+    }
+
+    .question-card {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      min-height: 100%;
+    }
+
+    .question-eyebrow {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .options {
+      display: grid;
+      gap: 12px;
+    }
+
+    .option {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 18px;
+      padding: 18px 18px;
+      font-size: 16px;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color .18s ease, background .18s ease, transform .12s ease, box-shadow .18s ease;
+    }
+
+    .option:hover {
+      border-color: #d8d8d8;
+      box-shadow: 0 8px 24px rgba(0,0,0,.04);
+    }
+
+    .option:active { transform: scale(.995); }
+
+    .option.selected {
+      border-color: var(--brand);
+      background: var(--brand-soft);
+      box-shadow: 0 10px 24px rgba(255,56,92,.12);
+    }
+
+    .stars {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .star {
+      border: none;
+      background: transparent;
+      font-size: 42px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+      color: #d7d7d7;
+      transition: transform .14s ease, color .14s ease;
+    }
+
+    .star.active {
+      color: var(--brand);
+    }
+
+    .star:active { transform: scale(.95); }
+
+    textarea {
+      width: 100%;
+      min-height: 124px;
+      resize: vertical;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      padding: 16px;
+      font: inherit;
+      color: var(--text);
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease;
+      background: #fff;
+    }
+
+    textarea:focus {
+      border-color: #cfcfcf;
+      box-shadow: 0 0 0 4px rgba(0,0,0,.03);
+    }
+
+    .field-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: -10px;
+    }
+
+    .footer {
+      position: sticky;
+      bottom: 0;
+      margin-top: auto;
+      padding-top: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.92) 24%, #fff 56%);
+      backdrop-filter: blur(8px);
+    }
+
+    .footer-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      height: 56px;
+      border: none;
+      border-radius: 999px;
+      padding: 0 22px;
+      font-size: 16px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .16s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .btn:active { transform: scale(.99); }
+
+    .btn-primary {
+      background: var(--brand);
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(255,56,92,.24);
+      flex: 1;
+    }
+
+    .btn-primary[disabled] {
+      opacity: .45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .result-card, .loader-card {
+      margin: auto 0;
+    }
+
+    .review-box {
+      background: linear-gradient(180deg, #fff7f8 0%, #ffffff 100%);
+      border: 1px solid #ffd7e0;
+      border-radius: 22px;
+      padding: 22px;
+      line-height: 1.65;
+      font-size: 17px;
+      white-space: pre-line;
+    }
+
+    .chips {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      border-radius: 999px;
+      background: #f7f7f7;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #444;
+      border: 1px solid #efefef;
+    }
+
+    .loader-dots {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .loader-dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--brand);
+      animation: pulse 1.1s infinite ease-in-out;
+      opacity: .4;
+    }
+    .loader-dots span:nth-child(2) { animation-delay: .15s; }
+    .loader-dots span:nth-child(3) { animation-delay: .30s; }
+
+    @keyframes pulse {
+      0%, 100% { transform: translateY(0); opacity: .35; }
+      50% { transform: translateY(-4px); opacity: 1; }
+    }
+
+    .confetti-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 999;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      top: -12vh;
+      width: 10px;
+      height: 18px;
+      border-radius: 999px;
+      opacity: .95;
+      animation-name: confettiFall;
+      animation-timing-function: linear;
+      animation-fill-mode: forwards;
+      will-change: transform, opacity;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      100% {
+        transform: translate3d(var(--drift, 0px), 115vh, 0) rotate(var(--spin, 360deg));
+        opacity: 0;
+      }
+    }
+
+    .save-toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(26px + env(safe-area-inset-bottom));
+      transform: translate(-50%, 20px);
+      width: min(calc(100% - 28px), 460px);
+      background: rgba(34,34,34,.94);
+      color: #fff;
+      border-radius: 20px;
+      padding: 16px 18px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.22);
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .28s ease, transform .28s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .save-toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .save-toast-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .save-toast-text {
+      font-size: 14px;
+      line-height: 1.45;
+      color: rgba(255,255,255,.88);
+    }
+
+    .fine {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 560px) {
+      .app { padding-inline: 14px; }
+      .hero-card, .question-card, .result-card, .loader-card { padding: 20px; border-radius: 22px; }
+      .star { font-size: 38px; }
+      .option { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+  <div class="save-toast" id="saveToast" aria-live="polite">
+    <div class="save-toast-title">Respuesta guardada</div>
+    <div class="save-toast-text">Tu respuesta se ha guardado con delicadeza ✨</div>
+  </div>
+  <div class="app">
+    <div class="topbar" id="topbar">
+      <button class="back-btn" id="backBtn" aria-label="Volver" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M15 18L9 12L15 6" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="progress-wrap" aria-hidden="true">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="step-label" id="stepLabel"></div>
+    </div>
+
+    <section class="screen active" data-screen="intro">
+      <div class="hero">
+        <div class="hero-photo">
+          <img id="heroImage" src="https://wallpapers.com/images/hd/argentina-obelisco-de-buenos-aires-xwngoqdki2worr6p.jpg" alt="Portada de la experiencia" />
+          <div class="hero-badge">Nueva reseña disponible</div>
+        </div>
+
+        <div class="hero-card">
+          <div class="host-row">
+            <img class="host-avatar" id="hostAvatarIntro" alt="Foto del anfitrión" />
+            <div class="host-meta">
+              <div class="host-kicker">Anfitrión</div>
+              <div class="host-name">Mauri</div>
+            </div>
+          </div>
+          <h1>Tu anfitrión dejó una reseña sobre vos</h1>
+          <p class="lead">
+            Antes de verla, necesitamos una breve evaluación de tu experiencia de hospedaje, cowork y momentos compartidos.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="footer-row">
+          <button class="btn btn-primary" id="startBtn">Ver reseña</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="question">
+      <div class="question-wrap">
+        <div class="question-card">
+          <div>
+            <div class="question-eyebrow" id="questionEyebrow">Pregunta</div>
+            <h2 id="questionTitle"></h2>
+          </div>
+
+          <div id="questionContent"></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="footer-row">
+          <button class="btn btn-primary" id="nextBtn" disabled>Continuar</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="loader">
+      <div class="loader-card">
+        <div class="chips" style="margin-bottom: 18px;">
+          <span class="chip">Procesando feedback</span>
+          <span class="chip">Desbloqueando reseña</span>
+        </div>
+        <h2 style="margin-bottom: 10px;">Generando reseña del anfitrión…</h2>
+        <p class="lead" style="margin-bottom: 18px;">Un momento, estamos preparando el contenido final.</p>
+        <div class="loader-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="result">
+      <div class="result-card">
+        <div class="chips" style="margin-bottom: 18px;">
+          <span class="chip">Evaluación completada</span>
+          <span class="chip">Reseña desbloqueada</span>
+        </div>
+        <div class="host-row" style="margin-bottom: 18px;">
+          <img class="host-avatar" id="hostAvatarResult" alt="Foto del anfitrión" />
+          <div class="host-meta">
+            <div class="host-kicker">Review escrita por</div>
+            <div class="host-name">Mauri, tu anfitrión</div>
+          </div>
+        </div>
+        <h2 style="margin-bottom: 14px;">Review del anfitrión</h2>
+        <div class="review-box" id="reviewText">Cargando reseña…</div>
+
+        <div style="margin-top: 22px; display: grid; gap: 12px;">
+          <button class="btn btn-primary" id="finishBtn">Cerrar experiencia</button>
+          <button class="btn btn-secondary" id="downloadBtn">Descargar mis respuestas</button>
+          <div class="fine" id="saveStatus">
+            Las respuestas se guardan automáticamente. Si configurás un endpoint, también se enviarán para que el anfitrión las lea.
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbx-3jA2gvk2If2ANBPHy72CW0o-7AEkQUUnb1xreiG-r7a5E7uDV94W2MQP99N7dxVo/exec";
+    const HERO_IMAGE = "https://wallpapers.com/images/hd/argentina-obelisco-de-buenos-aires-xwngoqdki2worr6p.jpg";
+    const HOST_PROFILE_IMAGE = "perfil.png";
+    const HOST_REVIEW = `Huésped hermosa, atenta y extremadamente considerada.
+Cuidó tanto el departamento como al anfitrión, y dejó todo siempre ordenado (incluida una cama impecablemente tendida en todo momento, como corresponde 😄).
+
+Su presencia iluminó el lugar y lo llenó de vida y alegría.
+Compartimos momentos simples que se volvieron especiales, entre cocina, charlas y jornadas de cowork junto a Claudio, quien también tuvo un desempeño ejemplar.
+
+Sin dudas, una huésped altamente recomendable.
+Las puertas quedan abiertas para cuando quiera volver.`;
+
+    const questions = [
+      {
+        id: "estadiascore",
+        eyebrow: "Estadía general",
+        title: "¿Cómo calificarías tu estadía en el departamento?",
+        type: "starsWithComment",
+        placeholder: "Comentario adicional (opcional)"
+      },
+      {
+        id: "sola",
+        eyebrow: "Comodidad en el espacio",
+        title: "¿Cómo te sentiste estando sola en el departamento?",
+        type: "singleChoice",
+        options: [
+          "Muy cómoda",
+          "Rara al principio, después cómoda",
+          "En general un poco rara 😅"
+        ]
+      },
+      {
+        id: "cowork",
+        eyebrow: "Modo trabajo",
+        title: "¿Qué tal fue usar el departamento como espacio de trabajo?",
+        type: "singleChoice",
+        options: [
+          "Ideal, justo lo que imaginaba",
+          "Bien, aunque tenía algunas distracciones agradables 😄",
+          "Aceptable, pero podría haber algunos ajustes"
+        ]
+      },
+      {
+        id: "limpieza",
+        eyebrow: "Estado general",
+        title: "¿Cómo evaluarías la limpieza general del departamento?",
+        type: "stars"
+      },
+      {
+        id: "gustomas",
+        eyebrow: "Lo mejor de la experiencia",
+        title: "¿Qué fue lo que más te gustó de estar en el departamento?",
+        type: "textarea",
+        placeholder: "Escribí lo que más te gustó…"
+      },
+      {
+        id: "mejora",
+        eyebrow: "Ajustes posibles",
+        title: "Si tuvieras que mejorar algo del departamento, ¿qué sería?",
+        type: "textarea",
+        placeholder: "Podés escribir cualquier mejora, por pequeña que sea…"
+      },
+      {
+        id: "noideal",
+        eyebrow: "Pequeñas cosas",
+        title: "¿Hubo algo pequeño que no fue ideal, pero tampoco grave?",
+        type: "textarea",
+        placeholder: "Contalo con total honestidad…"
+      },
+      {
+        id: "encasa",
+        eyebrow: "Momento especial",
+        title: "¿En qué momento te sentiste más cómoda o más “en casa”?",
+        type: "textarea",
+        placeholder: "Podés contar una situación, un momento o una sensación…"
+      },
+      {
+        id: "repetir",
+        eyebrow: "Próxima visita",
+        title: "¿Repetirías la experiencia?",
+        type: "singleChoice",
+        options: [
+          "Sí, sin cambios",
+          "Sí, con algunos ajustes",
+          "Negociable 😄"
+        ]
+      },
+      {
+        id: "anfitrion",
+        eyebrow: "Review del anfitrión",
+        title: "¿Cómo fue tu experiencia con el anfitrión?",
+        type: "textarea",
+        placeholder: "Este espacio está reservado para tu review más sincera…"
+      }
+    ];
+
+    const state = {
+      currentIndex: -1,
+      answers: {},
+      totalSteps: questions.length
+    };
+
+    const screens = {
+      intro: document.querySelector('[data-screen="intro"]'),
+      question: document.querySelector('[data-screen="question"]'),
+      loader: document.querySelector('[data-screen="loader"]'),
+      result: document.querySelector('[data-screen="result"]')
+    };
+
+    const topbar = document.getElementById('topbar');
+    const progressBar = document.getElementById('progressBar');
+    const stepLabel = document.getElementById('stepLabel');
+    const backBtn = document.getElementById('backBtn');
+    const startBtn = document.getElementById('startBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const questionEyebrow = document.getElementById('questionEyebrow');
+    const questionTitle = document.getElementById('questionTitle');
+    const questionContent = document.getElementById('questionContent');
+    const reviewText = document.getElementById('reviewText');
+    const finishBtn = document.getElementById('finishBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const saveStatus = document.getElementById('saveStatus');
+    const confettiLayer = document.getElementById('confettiLayer');
+    const saveToast = document.getElementById('saveToast');
+    const heroImage = document.getElementById('heroImage');
+    const hostAvatarIntro = document.getElementById('hostAvatarIntro');
+    const hostAvatarResult = document.getElementById('hostAvatarResult');
+
+    heroImage.src = HERO_IMAGE;
+    reviewText.textContent = HOST_REVIEW;
+    if (hostAvatarIntro) hostAvatarIntro.src = HOST_PROFILE_IMAGE;
+    if (hostAvatarResult) hostAvatarResult.src = HOST_PROFILE_IMAGE;
+
+    function showScreen(name) {
+      Object.values(screens).forEach(screen => screen.classList.remove('active'));
+      screens[name].classList.add('active');
+
+      const showTopbar = name === 'question';
+      topbar.style.visibility = showTopbar ? 'visible' : 'hidden';
+      topbar.style.pointerEvents = showTopbar ? 'auto' : 'none';
+    }
+
+    function updateProgress() {
+      const currentStep = Math.max(0, state.currentIndex + 1);
+      const progress = state.totalSteps ? (currentStep / state.totalSteps) * 100 : 0;
+      progressBar.style.width = `${progress}%`;
+      stepLabel.textContent = currentStep > 0 ? `${currentStep}/${state.totalSteps}` : '';
+      backBtn.disabled = state.currentIndex <= 0;
+    }
+
+    function isCurrentAnswered() {
+      const q = questions[state.currentIndex];
+      if (!q) return false;
+      const answer = state.answers[q.id];
+
+      if (q.type === 'stars' || q.type === 'starsWithComment') {
+        return !!answer?.rating;
+      }
+      if (q.type === 'singleChoice' || q.type === 'textarea') {
+        return typeof answer?.value === 'string' && answer.value.trim().length > 0;
+      }
+      return false;
+    }
+
+    function setNextEnabled() {
+      nextBtn.disabled = !isCurrentAnswered();
+    }
+
+    function buildPayload() {
+      return {
+        calificacion_estadia: state.answers.estadiascore?.rating || null,
+        comentario_estadia: state.answers.estadiascore?.comment || '',
+        estar_sola: state.answers.sola?.value || '',
+        espacio_trabajo: state.answers.cowork?.value || '',
+        limpieza: state.answers.limpieza?.rating || null,
+        lo_que_mas_gusto: state.answers.gustomas?.value || '',
+        mejora_departamento: state.answers.mejora?.value || '',
+        algo_no_ideal: state.answers.noideal?.value || '',
+        momento_mas_en_casa: state.answers.encasa?.value || '',
+        repetiria: state.answers.repetir?.value || '',
+        review_anfitrion: state.answers.anfitrion?.value || '',
+        submitted_at: new Date().toISOString(),
+        source: 'encuesta-airbnb-pareja'
+      };
+    }
+
+    function persistLocalDraft() {
+      localStorage.setItem('encuesta_airbnb_respuestas', JSON.stringify(buildPayload()));
+    }
+
+    function selectChoice(questionId, value) {
+      state.answers[questionId] = { value };
+      persistLocalDraft();
+      renderQuestion();
+    }
+
+    function setStars(questionId, rating, comment) {
+      const existing = state.answers[questionId] || {};
+      state.answers[questionId] = {
+        ...existing,
+        rating,
+        comment: typeof comment === 'string' ? comment : (existing.comment || '')
+      };
+      persistLocalDraft();
+      setNextEnabled();
+    }
+
+    function setTextarea(questionId, value) {
+      state.answers[questionId] = { value };
+      persistLocalDraft();
+      setNextEnabled();
+    }
+
+    function renderStars(question, withComment = false) {
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'grid';
+      wrapper.style.gap = '16px';
+
+      const stars = document.createElement('div');
+      stars.className = 'stars';
+      const currentRating = state.answers[question.id]?.rating || 0;
+
+      for (let i = 1; i <= 5; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'star' + (i <= currentRating ? ' active' : '');
+        btn.type = 'button';
+        btn.textContent = '★';
+        btn.setAttribute('aria-label', `${i} estrellas`);
+        btn.addEventListener('click', () => {
+          const comment = state.answers[question.id]?.comment || '';
+          setStars(question.id, i, comment);
+          renderQuestion();
+        });
+        stars.appendChild(btn);
+      }
+
+      wrapper.appendChild(stars);
+
+      if (withComment) {
+        const label = document.createElement('div');
+        label.className = 'field-label';
+        label.textContent = 'Comentario adicional (opcional)';
+        wrapper.appendChild(label);
+
+        const textarea = document.createElement('textarea');
+        textarea.placeholder = question.placeholder || '';
+        textarea.value = state.answers[question.id]?.comment || '';
+        textarea.addEventListener('input', (e) => {
+          const rating = state.answers[question.id]?.rating || 0;
+          setStars(question.id, rating, e.target.value);
+        });
+        wrapper.appendChild(textarea);
+      }
+
+      return wrapper;
+    }
+
+    function renderSingleChoice(question) {
+      const container = document.createElement('div');
+      container.className = 'options';
+      const selected = state.answers[question.id]?.value;
+
+      question.options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'option' + (selected === option ? ' selected' : '');
+        btn.textContent = option;
+        btn.addEventListener('click', () => selectChoice(question.id, option));
+        container.appendChild(btn);
+      });
+
+      return container;
+    }
+
+    function renderTextarea(question) {
+      const container = document.createElement('div');
+      container.style.display = 'grid';
+      container.style.gap = '12px';
+
+      const textarea = document.createElement('textarea');
+      textarea.placeholder = question.placeholder || '';
+      textarea.value = state.answers[question.id]?.value || '';
+      textarea.addEventListener('input', (e) => setTextarea(question.id, e.target.value));
+      container.appendChild(textarea);
+
+      const hint = document.createElement('div');
+      hint.className = 'hint';
+      hint.textContent = 'Respuesta abierta.';
+      container.appendChild(hint);
+      return container;
+    }
+
+    function renderQuestion() {
+      const question = questions[state.currentIndex];
+      questionEyebrow.textContent = question.eyebrow;
+      questionTitle.textContent = question.title;
+      questionContent.innerHTML = '';
+
+      let node = null;
+      if (question.type === 'stars') node = renderStars(question, false);
+      if (question.type === 'starsWithComment') node = renderStars(question, true);
+      if (question.type === 'singleChoice') node = renderSingleChoice(question);
+      if (question.type === 'textarea') node = renderTextarea(question);
+
+      if (node) questionContent.appendChild(node);
+      updateProgress();
+      setNextEnabled();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goToQuestion(index) {
+      state.currentIndex = index;
+      showScreen('question');
+      renderQuestion();
+    }
+
+async function submitIfConfigured() {
+  if (!SUBMIT_ENDPOINT) {
+    saveStatus.textContent = 'Las respuestas quedaron guardadas en este dispositivo. También podés descargarlas con el botón de abajo.';
+    return { ok: true, mode: 'local' };
+  }
+
+  try {
+    const payload = buildPayload();
+
+    console.log('ENVIANDO A:', SUBMIT_ENDPOINT);
+    console.log('PAYLOAD:', payload);
+
+    const res = await fetch(SUBMIT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const text = await res.text();
+
+    console.log('STATUS:', res.status);
+    console.log('RESPUESTA:', text);
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} - ${text}`);
+    }
+
+    saveStatus.textContent = 'Las respuestas se enviaron correctamente y también quedaron guardadas en este dispositivo.';
+    return { ok: true, mode: 'remote' };
+
+  } catch (err) {
+    console.error('FALLO ENVÍO:', err);
+    alert('Falló el envío remoto: ' + err);
+    saveStatus.textContent = 'No se pudo enviar automáticamente. Igual quedaron guardadas en este dispositivo y podés descargarlas abajo.';
+    return { ok: false, mode: 'fallback' };
+  }
+}
+
+    function downloadAnswers() {
+      const blob = new Blob([JSON.stringify(buildPayload(), null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'respuestas-encuesta-hospedaje.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function launchConfettiBurst() {
+      const pieces = 28;
+      for (let i = 0; i < pieces; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.animationDuration = `${3 + Math.random() * 1.7}s`;
+        piece.style.animationDelay = `${Math.random() * 0.18}s`;
+        piece.style.setProperty('--drift', `${-90 + Math.random() * 180}px`);
+        piece.style.setProperty('--spin', `${220 + Math.random() * 780}deg`);
+        const hue = [340, 350, 12, 28, 42][Math.floor(Math.random() * 5)];
+        const light = 60 + Math.floor(Math.random() * 12);
+        piece.style.background = `hsl(${hue} 90% ${light}%)`;
+        confettiLayer.appendChild(piece);
+        piece.addEventListener('animationend', () => piece.remove());
+      }
+    }
+
+    let toastTimer = null;
+    function showSaveToast() {
+      clearTimeout(toastTimer);
+      saveToast.classList.add('show');
+      toastTimer = setTimeout(() => {
+        saveToast.classList.remove('show');
+      }, 2200);
+    }
+
+    function celebrateSave() {
+      launchConfettiBurst();
+      showSaveToast();
+    }
+
+    async function finishSurvey() {
+      showScreen('loader');
+      await submitIfConfigured();
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      showScreen('result');
+      celebrateSave();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    startBtn.addEventListener('click', () => {
+      goToQuestion(0);
+    });
+
+    nextBtn.addEventListener('click', async () => {
+      if (!isCurrentAnswered()) return;
+      if (state.currentIndex < questions.length - 1) {
+        goToQuestion(state.currentIndex + 1);
+      } else {
+        await finishSurvey();
+      }
+    });
+
+    backBtn.addEventListener('click', () => {
+      if (state.currentIndex > 0) {
+        goToQuestion(state.currentIndex - 1);
+      }
+    });
+
+    finishBtn.addEventListener('click', () => {
+      alert('Experiencia finalizada 💖');
+    });
+
+    downloadBtn.addEventListener('click', downloadAnswers);
+
+    showScreen('intro');
+  </script>
+</body>
+</html>
