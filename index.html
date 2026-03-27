@@ -15,13 +15,13 @@
       --card: #ffffff;
       --shadow: 0 8px 30px rgba(0,0,0,0.08);
       --radius: 24px;
-      --radius-sm: 16px;
       --maxw: 760px;
       --safe-top: max(16px, env(safe-area-inset-top));
       --safe-bottom: max(16px, env(safe-area-inset-bottom));
     }
 
     * { box-sizing: border-box; }
+
     html, body {
       margin: 0;
       padding: 0;
@@ -70,6 +70,7 @@
       flex: 0 0 auto;
       transition: transform .16s ease, background .16s ease;
     }
+
     .back-btn:active { transform: scale(.98); }
     .back-btn[disabled] { opacity: 0; pointer-events: none; }
 
@@ -133,8 +134,8 @@
       aspect-ratio: 4 / 3;
       border-radius: 28px;
       overflow: hidden;
-      background: linear-gradient(135deg, #ffe6eb, #fff6f7);
-      border: 1px solid #f6d6dd;
+      background: linear-gradient(135deg, #111822, #1d2b3f);
+      border: 1px solid rgba(255,255,255,.06);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -288,10 +289,7 @@
       transition: transform .14s ease, color .14s ease;
     }
 
-    .star.active {
-      color: var(--brand);
-    }
-
+    .star.active { color: var(--brand); }
     .star:active { transform: scale(.95); }
 
     textarea {
@@ -416,6 +414,7 @@
       animation: pulse 1.1s infinite ease-in-out;
       opacity: .4;
     }
+
     .loader-dots span:nth-child(2) { animation-delay: .15s; }
     .loader-dots span:nth-child(3) { animation-delay: .30s; }
 
@@ -450,9 +449,7 @@
         transform: translate3d(0, 0, 0) rotate(0deg);
         opacity: 0;
       }
-      10% {
-        opacity: 1;
-      }
+      10% { opacity: 1; }
       100% {
         transform: translate3d(var(--drift, 0px), 115vh, 0) rotate(var(--spin, 360deg));
         opacity: 0;
@@ -500,8 +497,6 @@
       line-height: 1.45;
     }
 
-    .hidden { display: none !important; }
-
     @media (max-width: 560px) {
       .app { padding-inline: 14px; }
       .hero-card, .question-card, .result-card, .loader-card { padding: 20px; border-radius: 22px; }
@@ -511,11 +506,30 @@
   </style>
 </head>
 <body>
+  <iframe name="hiddenSubmitFrame" style="display:none;"></iframe>
+
+  <form id="gasForm" method="POST" target="hiddenSubmitFrame" style="display:none;">
+    <input type="hidden" name="submitted_at">
+    <input type="hidden" name="calificacion_estadia">
+    <input type="hidden" name="comentario_estadia">
+    <input type="hidden" name="estar_sola">
+    <input type="hidden" name="espacio_trabajo">
+    <input type="hidden" name="limpieza">
+    <input type="hidden" name="lo_que_mas_gusto">
+    <input type="hidden" name="mejora_departamento">
+    <input type="hidden" name="algo_no_ideal">
+    <input type="hidden" name="momento_mas_en_casa">
+    <input type="hidden" name="repetiria">
+    <input type="hidden" name="review_anfitrion">
+  </form>
+
   <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+
   <div class="save-toast" id="saveToast" aria-live="polite">
     <div class="save-toast-title">Respuesta guardada</div>
     <div class="save-toast-text">Tu respuesta se ha guardado con delicadeza ✨</div>
   </div>
+
   <div class="app">
     <div class="topbar" id="topbar">
       <button class="back-btn" id="backBtn" aria-label="Volver" disabled>
@@ -565,7 +579,6 @@
             <div class="question-eyebrow" id="questionEyebrow">Pregunta</div>
             <h2 id="questionTitle"></h2>
           </div>
-
           <div id="questionContent"></div>
         </div>
       </div>
@@ -595,6 +608,7 @@
           <span class="chip">Evaluación completada</span>
           <span class="chip">Reseña desbloqueada</span>
         </div>
+
         <div class="host-row" style="margin-bottom: 18px;">
           <img class="host-avatar" id="hostAvatarResult" alt="Foto del anfitrión" />
           <div class="host-meta">
@@ -602,8 +616,9 @@
             <div class="host-name">Mauri, tu anfitrión</div>
           </div>
         </div>
+
         <h2 style="margin-bottom: 14px;">Review del anfitrión</h2>
-        <div class="review-box" id="reviewText">Cargando reseña…</div>
+        <div class="review-box" id="reviewText"></div>
 
         <div style="margin-top: 22px; display: grid; gap: 12px;">
           <button class="btn btn-primary" id="finishBtn">Cerrar experiencia</button>
@@ -617,7 +632,7 @@
   </div>
 
   <script>
-    const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbx-3jA2gvk2If2ANBPHy72CW0o-7AEkQUUnb1xreiG-r7a5E7uDV94W2MQP99N7dxVo/exec";
+    const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbwOg_eAHQaFWJVfIkyzCegBsjXXKGwB4PIEO8FL952gD0IYcKKqcKbtgtaJkWMfrynX/exec";
     const HERO_IMAGE = "https://wallpapers.com/images/hd/argentina-obelisco-de-buenos-aires-xwngoqdki2worr6p.jpg";
     const HOST_PROFILE_IMAGE = "perfil.png";
     const HOST_REVIEW = `Huésped hermosa, atenta y extremadamente considerada.
@@ -744,6 +759,7 @@ Las puertas quedan abiertas para cuando quiera volver.`;
     const heroImage = document.getElementById('heroImage');
     const hostAvatarIntro = document.getElementById('hostAvatarIntro');
     const hostAvatarResult = document.getElementById('hostAvatarResult');
+    const gasForm = document.getElementById('gasForm');
 
     heroImage.src = HERO_IMAGE;
     reviewText.textContent = HOST_REVIEW;
@@ -753,7 +769,6 @@ Las puertas quedan abiertas para cuando quiera volver.`;
     function showScreen(name) {
       Object.values(screens).forEach(screen => screen.classList.remove('active'));
       screens[name].classList.add('active');
-
       const showTopbar = name === 'question';
       topbar.style.visibility = showTopbar ? 'visible' : 'hidden';
       topbar.style.pointerEvents = showTopbar ? 'auto' : 'none';
@@ -775,9 +790,11 @@ Las puertas quedan abiertas para cuando quiera volver.`;
       if (q.type === 'stars' || q.type === 'starsWithComment') {
         return !!answer?.rating;
       }
+
       if (q.type === 'singleChoice' || q.type === 'textarea') {
         return typeof answer?.value === 'string' && answer.value.trim().length > 0;
       }
+
       return false;
     }
 
@@ -787,19 +804,18 @@ Las puertas quedan abiertas para cuando quiera volver.`;
 
     function buildPayload() {
       return {
-        calificacion_estadia: state.answers.estadiascore?.rating || null,
+        submitted_at: new Date().toISOString(),
+        calificacion_estadia: state.answers.estadiascore?.rating || '',
         comentario_estadia: state.answers.estadiascore?.comment || '',
         estar_sola: state.answers.sola?.value || '',
         espacio_trabajo: state.answers.cowork?.value || '',
-        limpieza: state.answers.limpieza?.rating || null,
+        limpieza: state.answers.limpieza?.rating || '',
         lo_que_mas_gusto: state.answers.gustomas?.value || '',
         mejora_departamento: state.answers.mejora?.value || '',
         algo_no_ideal: state.answers.noideal?.value || '',
         momento_mas_en_casa: state.answers.encasa?.value || '',
         repetiria: state.answers.repetir?.value || '',
-        review_anfitrion: state.answers.anfitrion?.value || '',
-        submitted_at: new Date().toISOString(),
-        source: 'encuesta-airbnb-pareja'
+        review_anfitrion: state.answers.anfitrion?.value || ''
       };
     }
 
@@ -933,43 +949,30 @@ Las puertas quedan abiertas para cuando quiera volver.`;
       renderQuestion();
     }
 
-async function submitIfConfigured() {
-  if (!SUBMIT_ENDPOINT) {
-    saveStatus.textContent = 'Las respuestas quedaron guardadas en este dispositivo. También podés descargarlas con el botón de abajo.';
-    return { ok: true, mode: 'local' };
-  }
+    async function submitIfConfigured() {
+      if (!SUBMIT_ENDPOINT) {
+        saveStatus.textContent = 'Las respuestas quedaron guardadas en este dispositivo. También podés descargarlas con el botón de abajo.';
+        return { ok: true, mode: 'local' };
+      }
 
-  try {
-    const payload = buildPayload();
+      try {
+        const payload = buildPayload();
+        gasForm.action = SUBMIT_ENDPOINT;
 
-    console.log('ENVIANDO A:', SUBMIT_ENDPOINT);
-    console.log('PAYLOAD:', payload);
+        Object.entries(payload).forEach(([key, value]) => {
+          const input = gasForm.querySelector(`[name="${key}"]`);
+          if (input) input.value = value ?? '';
+        });
 
-    const res = await fetch(SUBMIT_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const text = await res.text();
-
-    console.log('STATUS:', res.status);
-    console.log('RESPUESTA:', text);
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} - ${text}`);
+        gasForm.submit();
+        saveStatus.textContent = 'Las respuestas se enviaron correctamente y también quedaron guardadas en este dispositivo.';
+        return { ok: true, mode: 'remote-form' };
+      } catch (err) {
+        console.error('FALLO ENVÍO:', err);
+        saveStatus.textContent = 'No se pudo enviar automáticamente. Igual quedaron guardadas en este dispositivo y podés descargarlas abajo.';
+        return { ok: false, mode: 'fallback' };
+      }
     }
-
-    saveStatus.textContent = 'Las respuestas se enviaron correctamente y también quedaron guardadas en este dispositivo.';
-    return { ok: true, mode: 'remote' };
-
-  } catch (err) {
-    console.error('FALLO ENVÍO:', err);
-    alert('Falló el envío remoto: ' + err);
-    saveStatus.textContent = 'No se pudo enviar automáticamente. Igual quedaron guardadas en este dispositivo y podés descargarlas abajo.';
-    return { ok: false, mode: 'fallback' };
-  }
-}
 
     function downloadAnswers() {
       const blob = new Blob([JSON.stringify(buildPayload(), null, 2)], { type: 'application/json' });
@@ -1024,9 +1027,7 @@ async function submitIfConfigured() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    startBtn.addEventListener('click', () => {
-      goToQuestion(0);
-    });
+    startBtn.addEventListener('click', () => goToQuestion(0));
 
     nextBtn.addEventListener('click', async () => {
       if (!isCurrentAnswered()) return;
@@ -1038,9 +1039,7 @@ async function submitIfConfigured() {
     });
 
     backBtn.addEventListener('click', () => {
-      if (state.currentIndex > 0) {
-        goToQuestion(state.currentIndex - 1);
-      }
+      if (state.currentIndex > 0) goToQuestion(state.currentIndex - 1);
     });
 
     finishBtn.addEventListener('click', () => {
