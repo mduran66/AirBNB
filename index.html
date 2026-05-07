@@ -15,13 +15,13 @@
       --card: #ffffff;
       --shadow: 0 8px 30px rgba(0,0,0,0.08);
       --radius: 24px;
+      --radius-sm: 16px;
       --maxw: 760px;
       --safe-top: max(16px, env(safe-area-inset-top));
       --safe-bottom: max(16px, env(safe-area-inset-bottom));
     }
 
     * { box-sizing: border-box; }
-
     html, body {
       margin: 0;
       padding: 0;
@@ -70,7 +70,6 @@
       flex: 0 0 auto;
       transition: transform .16s ease, background .16s ease;
     }
-
     .back-btn:active { transform: scale(.98); }
     .back-btn[disabled] { opacity: 0; pointer-events: none; }
 
@@ -94,7 +93,7 @@
       font-size: 13px;
       color: var(--muted);
       white-space: nowrap;
-      min-width: 78px;
+      min-width: 98px;
       text-align: right;
     }
 
@@ -134,8 +133,8 @@
       aspect-ratio: 4 / 3;
       border-radius: 28px;
       overflow: hidden;
-      background: linear-gradient(135deg, #111822, #1d2b3f);
-      border: 1px solid rgba(255,255,255,.06);
+      background: linear-gradient(135deg, #ffe6eb, #fff6f7);
+      border: 1px solid #f6d6dd;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -289,7 +288,10 @@
       transition: transform .14s ease, color .14s ease;
     }
 
-    .star.active { color: var(--brand); }
+    .star.active {
+      color: var(--brand);
+    }
+
     .star:active { transform: scale(.95); }
 
     textarea {
@@ -414,7 +416,6 @@
       animation: pulse 1.1s infinite ease-in-out;
       opacity: .4;
     }
-
     .loader-dots span:nth-child(2) { animation-delay: .15s; }
     .loader-dots span:nth-child(3) { animation-delay: .30s; }
 
@@ -449,7 +450,9 @@
         transform: translate3d(0, 0, 0) rotate(0deg);
         opacity: 0;
       }
-      10% { opacity: 1; }
+      10% {
+        opacity: 1;
+      }
       100% {
         transform: translate3d(var(--drift, 0px), 115vh, 0) rotate(var(--spin, 360deg));
         opacity: 0;
@@ -497,6 +500,22 @@
       line-height: 1.45;
     }
 
+    .hidden { display: none !important; }
+
+    .followup-wrap {
+      display: grid;
+      gap: 14px;
+      margin-top: 10px;
+      padding-top: 6px;
+    }
+
+    .followup-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: #fafafa;
+    }
+
     @media (max-width: 560px) {
       .app { padding-inline: 14px; }
       .hero-card, .question-card, .result-card, .loader-card { padding: 20px; border-radius: 22px; }
@@ -506,30 +525,11 @@
   </style>
 </head>
 <body>
-  <iframe name="hiddenSubmitFrame" style="display:none;"></iframe>
-
-  <form id="gasForm" method="POST" target="hiddenSubmitFrame" style="display:none;">
-    <input type="hidden" name="submitted_at">
-    <input type="hidden" name="calificacion_estadia">
-    <input type="hidden" name="comentario_estadia">
-    <input type="hidden" name="estar_sola">
-    <input type="hidden" name="espacio_trabajo">
-    <input type="hidden" name="limpieza">
-    <input type="hidden" name="lo_que_mas_gusto">
-    <input type="hidden" name="mejora_departamento">
-    <input type="hidden" name="algo_no_ideal">
-    <input type="hidden" name="momento_mas_en_casa">
-    <input type="hidden" name="repetiria">
-    <input type="hidden" name="review_anfitrion">
-  </form>
-
   <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-
   <div class="save-toast" id="saveToast" aria-live="polite">
     <div class="save-toast-title">Respuesta guardada</div>
     <div class="save-toast-text">Tu respuesta se ha guardado con delicadeza ✨</div>
   </div>
-
   <div class="app">
     <div class="topbar" id="topbar">
       <button class="back-btn" id="backBtn" aria-label="Volver" disabled>
@@ -579,6 +579,7 @@
             <div class="question-eyebrow" id="questionEyebrow">Pregunta</div>
             <h2 id="questionTitle"></h2>
           </div>
+
           <div id="questionContent"></div>
         </div>
       </div>
@@ -608,7 +609,6 @@
           <span class="chip">Evaluación completada</span>
           <span class="chip">Reseña desbloqueada</span>
         </div>
-
         <div class="host-row" style="margin-bottom: 18px;">
           <img class="host-avatar" id="hostAvatarResult" alt="Foto del anfitrión" />
           <div class="host-meta">
@@ -616,9 +616,8 @@
             <div class="host-name">Mauri, tu anfitrión</div>
           </div>
         </div>
-
         <h2 style="margin-bottom: 14px;">Review del anfitrión</h2>
-        <div class="review-box" id="reviewText"></div>
+        <div class="review-box" id="reviewText">Cargando reseña…</div>
 
         <div style="margin-top: 22px; display: grid; gap: 12px;">
           <button class="btn btn-primary" id="finishBtn">Cerrar experiencia</button>
@@ -632,16 +631,18 @@
   </div>
 
   <script>
-    const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbwOg_eAHQaFWJVfIkyzCegBsjXXKGwB4PIEO8FL952gD0IYcKKqcKbtgtaJkWMfrynX/exec";
+    const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbx-3jA2gvk2If2ANBPHy72CW0o-7AEkQUUnb1xreiG-r7a5E7uDV94W2MQP99N7dxVo/exec";
+    const TARGET_SHEET_NAME = "Encuesta_Mayo";
     const HERO_IMAGE = "https://wallpapers.com/images/hd/argentina-obelisco-de-buenos-aires-xwngoqdki2worr6p.jpg";
     const HOST_PROFILE_IMAGE = "perfil.png";
-    const HOST_REVIEW = `Huésped hermosa, atenta y extremadamente considerada.
-Cuidó tanto el departamento como al anfitrión, y dejó todo siempre ordenado (incluida una cama impecablemente tendida en todo momento, como corresponde 😄).
+    const HOST_REVIEW = `Huésped maravillosa, detallista y muy cuidadosa de todo.
+Cuidó tanto el departamento como al anfitrión y a su familia, a quienes dejó muy contentos con haberla conocido.
+Dejó todo siempre impecable y hasta organizó mejor la cocina; y nunca descuidó que la cama esté siempre perfectamente tendida (¡cómo debe ser!)
 
-Su presencia iluminó el lugar y lo llenó de vida y alegría.
-Compartimos momentos simples que se volvieron especiales, entre cocina, charlas y jornadas de cowork junto a Claudio, quien también tuvo un desempeño ejemplar.
+Cuando ella está, se siente como si estuviera siempre, la casa tiene más vida, más luz, más alegría, mas color, mas movimiento.
+Vivimos momentos simples que se volvieron especiales, entre cocina, manualidades, charlas y cowork con Claudio.
 
-Sin dudas, una huésped altamente recomendable.
+Sin dudas, una huésped que uno quisiera recibir cada día.
 Las puertas quedan abiertas para cuando quiera volver.`;
 
     const questions = [
@@ -653,24 +654,54 @@ Las puertas quedan abiertas para cuando quiera volver.`;
         placeholder: "Comentario adicional (opcional)"
       },
       {
-        id: "sola",
-        eyebrow: "Comodidad en el espacio",
-        title: "¿Cómo te sentiste estando sola en el departamento?",
+        id: "sueno",
+        eyebrow: "Descanso",
+        title: "¿Cómo dormiste durante tu estadía?",
         type: "singleChoice",
         options: [
-          "Muy cómoda",
-          "Rara al principio, después cómoda",
-          "En general un poco rara 😅"
+          "Dormí muy bien todas las noches",
+          "Dormí bien en general",
+          "Algunas noches no dormí bien",
+          "Dormí mal la mayoría de las noches"
+        ],
+        followUps: [
+          {
+            key: "sleep_influence",
+            type: "singleChoice",
+            label: "¿Creés que algo del departamento influyó en cómo dormiste?",
+            options: [
+              "Sí, definitivamente",
+              "Puede ser",
+              "No, fue por otros factores"
+            ],
+            required: true,
+            showWhen: (answer) => {
+              const main = answer?.value || "";
+              return ["Algunas noches no dormí bien", "Dormí mal la mayoría de las noches"].includes(main);
+            }
+          },
+          {
+            key: "sleep_detail",
+            type: "textarea",
+            label: "Si querés, contá qué pudo influir (opcional)",
+            placeholder: "Ruido, temperatura, colchón, luz, almohada...",
+            required: false,
+            showWhen: (answer) => {
+              const influence = answer?.followups?.sleep_influence || "";
+              return ["Sí, definitivamente", "Puede ser"].includes(influence);
+            }
+          }
         ]
       },
       {
         id: "cowork",
         eyebrow: "Modo trabajo",
-        title: "¿Qué tal fue usar el departamento como espacio de trabajo?",
+        title: "Al trabajar ¿crees que pudiste tener productividad similar a estar en tu casa?",
         type: "singleChoice",
         options: [
-          "Ideal, justo lo que imaginaba",
-          "Bien, aunque tenía algunas distracciones agradables 😄",
+          "Si, la misma productividad que en casa",
+          "Similar, lo suficiente para estar conforme",
+          "Bien, aunque tuve algunas distracciones agradables 😄",
           "Aceptable, pero podría haber algunos ajustes"
         ]
       },
@@ -683,9 +714,9 @@ Las puertas quedan abiertas para cuando quiera volver.`;
       {
         id: "gustomas",
         eyebrow: "Lo mejor de la experiencia",
-        title: "¿Qué fue lo que más te gustó de estar en el departamento?",
+        title: "¿Qué opinas de la variedad de la comida en el departamento, tanto para desayuno/merienda y almuerzo /cena?",
         type: "textarea",
-        placeholder: "Escribí lo que más te gustó…"
+        placeholder: "Contá tu opinión sobre la comida y las opciones disponibles…"
       },
       {
         id: "mejora",
@@ -709,14 +740,14 @@ Las puertas quedan abiertas para cuando quiera volver.`;
         placeholder: "Podés contar una situación, un momento o una sensación…"
       },
       {
-        id: "repetir",
+        id: "balance",
         eyebrow: "Próxima visita",
-        title: "¿Repetirías la experiencia?",
+        title: "Pensando en una próxima visita, ¿qué te gustaría ajustar?",
         type: "singleChoice",
         options: [
-          "Sí, sin cambios",
-          "Sí, con algunos ajustes",
-          "Negociable 😄"
+          "Hacer más planes afuera",
+          "Hacer más planes tranquilos en el departamento",
+          "Mantenerlo igual"
         ]
       },
       {
@@ -730,8 +761,7 @@ Las puertas quedan abiertas para cuando quiera volver.`;
 
     const state = {
       currentIndex: -1,
-      answers: {},
-      totalSteps: questions.length
+      answers: {}
     };
 
     const screens = {
@@ -759,7 +789,8 @@ Las puertas quedan abiertas para cuando quiera volver.`;
     const heroImage = document.getElementById('heroImage');
     const hostAvatarIntro = document.getElementById('hostAvatarIntro');
     const hostAvatarResult = document.getElementById('hostAvatarResult');
-    const gasForm = document.getElementById('gasForm');
+
+    const STORAGE_KEY = 'encuesta_airbnb_mayo_respuestas';
 
     heroImage.src = HERO_IMAGE;
     reviewText.textContent = HOST_REVIEW;
@@ -769,33 +800,114 @@ Las puertas quedan abiertas para cuando quiera volver.`;
     function showScreen(name) {
       Object.values(screens).forEach(screen => screen.classList.remove('active'));
       screens[name].classList.add('active');
+
       const showTopbar = name === 'question';
       topbar.style.visibility = showTopbar ? 'visible' : 'hidden';
       topbar.style.pointerEvents = showTopbar ? 'auto' : 'none';
     }
 
+    function getAnswer(questionId) {
+      return state.answers[questionId] || {};
+    }
+
+    function ensureAnswer(questionId) {
+      if (!state.answers[questionId]) {
+        state.answers[questionId] = {};
+      }
+      return state.answers[questionId];
+    }
+
+    function persistLocalDraft() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPayload()));
+    }
+
+    function setAnswerPatch(questionId, patch) {
+      const current = ensureAnswer(questionId);
+      state.answers[questionId] = {
+        ...current,
+        ...patch
+      };
+      persistLocalDraft();
+    }
+
+    function setFollowupValue(questionId, key, value) {
+      const current = ensureAnswer(questionId);
+      state.answers[questionId] = {
+        ...current,
+        followups: {
+          ...(current.followups || {}),
+          [key]: value
+        }
+      };
+      persistLocalDraft();
+    }
+
+    function isMainAnswered(question) {
+      const answer = getAnswer(question.id);
+
+      if (question.type === 'stars' || question.type === 'starsWithComment') {
+        return !!answer.rating;
+      }
+      if (question.type === 'singleChoice' || question.type === 'textarea') {
+        return typeof answer.value === 'string' && answer.value.trim().length > 0;
+      }
+      return false;
+    }
+
+    function isFollowupAnswered(questionId, followup) {
+      const answer = getAnswer(questionId);
+      const value = answer.followups?.[followup.key];
+
+      if (followup.type === 'singleChoice') {
+        return typeof value === 'string' && value.trim().length > 0;
+      }
+      if (followup.type === 'textarea') {
+        return typeof value === 'string' && value.trim().length > 0;
+      }
+      return false;
+    }
+
+    function getVisibleRequiredFollowups(question) {
+      const answer = getAnswer(question.id);
+      return (question.followUps || []).filter(followup => {
+        const visible = typeof followup.showWhen === 'function' ? followup.showWhen(answer, question, state.answers) : true;
+        return visible && followup.required;
+      });
+    }
+
+    function getProgressStats() {
+      let total = 0;
+      let done = 0;
+
+      QUESTIONS_LOOP: for (const question of questions) {
+        total += 1;
+        if (isMainAnswered(question)) done += 1;
+
+        const visibleRequiredFollowups = getVisibleRequiredFollowups(question);
+        for (const followup of visibleRequiredFollowups) {
+          total += 1;
+          if (isFollowupAnswered(question.id, followup)) done += 1;
+        }
+      }
+
+      return { total, done };
+    }
+
     function updateProgress() {
-      const currentStep = Math.max(0, state.currentIndex + 1);
-      const progress = state.totalSteps ? (currentStep / state.totalSteps) * 100 : 0;
+      const { total, done } = getProgressStats();
+      const progress = total ? (done / total) * 100 : 0;
       progressBar.style.width = `${progress}%`;
-      stepLabel.textContent = currentStep > 0 ? `${currentStep}/${state.totalSteps}` : '';
+      stepLabel.textContent = `${done}/${total} respondidas`;
       backBtn.disabled = state.currentIndex <= 0;
     }
 
     function isCurrentAnswered() {
-      const q = questions[state.currentIndex];
-      if (!q) return false;
-      const answer = state.answers[q.id];
+      const question = questions[state.currentIndex];
+      if (!question) return false;
+      if (!isMainAnswered(question)) return false;
 
-      if (q.type === 'stars' || q.type === 'starsWithComment') {
-        return !!answer?.rating;
-      }
-
-      if (q.type === 'singleChoice' || q.type === 'textarea') {
-        return typeof answer?.value === 'string' && answer.value.trim().length > 0;
-      }
-
-      return false;
+      const requiredFollowups = getVisibleRequiredFollowups(question);
+      return requiredFollowups.every(followup => isFollowupAnswered(question.id, followup));
     }
 
     function setNextEnabled() {
@@ -804,45 +916,53 @@ Las puertas quedan abiertas para cuando quiera volver.`;
 
     function buildPayload() {
       return {
+        sheet_name: TARGET_SHEET_NAME,
         submitted_at: new Date().toISOString(),
-        calificacion_estadia: state.answers.estadiascore?.rating || '',
-        comentario_estadia: state.answers.estadiascore?.comment || '',
-        estar_sola: state.answers.sola?.value || '',
-        espacio_trabajo: state.answers.cowork?.value || '',
-        limpieza: state.answers.limpieza?.rating || '',
-        lo_que_mas_gusto: state.answers.gustomas?.value || '',
-        mejora_departamento: state.answers.mejora?.value || '',
-        algo_no_ideal: state.answers.noideal?.value || '',
-        momento_mas_en_casa: state.answers.encasa?.value || '',
-        repetiria: state.answers.repetir?.value || '',
-        review_anfitrion: state.answers.anfitrion?.value || ''
+        source: 'encuesta-airbnb-segunda-visita',
+        calificacion_estadia: getAnswer('estadiascore').rating || null,
+        comentario_estadia: getAnswer('estadiascore').comment || '',
+        sueno_general: getAnswer('sueno').value || '',
+        sueno_influyo_departamento: getAnswer('sueno').followups?.sleep_influence || '',
+        sueno_detalle: getAnswer('sueno').followups?.sleep_detail || '',
+        productividad_hogar: getAnswer('cowork').value || '',
+        limpieza: getAnswer('limpieza').rating || null,
+        variedad_comida: getAnswer('gustomas').value || '',
+        mejora_departamento: getAnswer('mejora').value || '',
+        algo_no_ideal: getAnswer('noideal').value || '',
+        momento_mas_en_casa: getAnswer('encasa').value || '',
+        balance_actividades: getAnswer('balance').value || '',        repetiria: getAnswer('repetir').value || '',
+        review_anfitrion: getAnswer('anfitrion').value || ''
       };
     }
 
-    function persistLocalDraft() {
-      localStorage.setItem('encuesta_airbnb_respuestas', JSON.stringify(buildPayload()));
-    }
-
     function selectChoice(questionId, value) {
-      state.answers[questionId] = { value };
-      persistLocalDraft();
+      setAnswerPatch(questionId, { value });
       renderQuestion();
     }
 
     function setStars(questionId, rating, comment) {
-      const existing = state.answers[questionId] || {};
-      state.answers[questionId] = {
-        ...existing,
+      const existing = getAnswer(questionId);
+      setAnswerPatch(questionId, {
         rating,
         comment: typeof comment === 'string' ? comment : (existing.comment || '')
-      };
-      persistLocalDraft();
-      setNextEnabled();
+      });
+      renderQuestion();
     }
 
     function setTextarea(questionId, value) {
-      state.answers[questionId] = { value };
-      persistLocalDraft();
+      setAnswerPatch(questionId, { value });
+      updateProgress();
+      setNextEnabled();
+    }
+
+    function setFollowupChoice(questionId, key, value) {
+      setFollowupValue(questionId, key, value);
+      renderQuestion();
+    }
+
+    function setFollowupTextarea(questionId, key, value) {
+      setFollowupValue(questionId, key, value);
+      updateProgress();
       setNextEnabled();
     }
 
@@ -853,7 +973,7 @@ Las puertas quedan abiertas para cuando quiera volver.`;
 
       const stars = document.createElement('div');
       stars.className = 'stars';
-      const currentRating = state.answers[question.id]?.rating || 0;
+      const currentRating = getAnswer(question.id).rating || 0;
 
       for (let i = 1; i <= 5; i++) {
         const btn = document.createElement('button');
@@ -862,9 +982,8 @@ Las puertas quedan abiertas para cuando quiera volver.`;
         btn.textContent = '★';
         btn.setAttribute('aria-label', `${i} estrellas`);
         btn.addEventListener('click', () => {
-          const comment = state.answers[question.id]?.comment || '';
+          const comment = getAnswer(question.id).comment || '';
           setStars(question.id, i, comment);
-          renderQuestion();
         });
         stars.appendChild(btn);
       }
@@ -879,9 +998,9 @@ Las puertas quedan abiertas para cuando quiera volver.`;
 
         const textarea = document.createElement('textarea');
         textarea.placeholder = question.placeholder || '';
-        textarea.value = state.answers[question.id]?.comment || '';
+        textarea.value = getAnswer(question.id).comment || '';
         textarea.addEventListener('input', (e) => {
-          const rating = state.answers[question.id]?.rating || 0;
+          const rating = getAnswer(question.id).rating || 0;
           setStars(question.id, rating, e.target.value);
         });
         wrapper.appendChild(textarea);
@@ -893,7 +1012,7 @@ Las puertas quedan abiertas para cuando quiera volver.`;
     function renderSingleChoice(question) {
       const container = document.createElement('div');
       container.className = 'options';
-      const selected = state.answers[question.id]?.value;
+      const selected = getAnswer(question.id).value;
 
       question.options.forEach(option => {
         const btn = document.createElement('button');
@@ -914,7 +1033,7 @@ Las puertas quedan abiertas para cuando quiera volver.`;
 
       const textarea = document.createElement('textarea');
       textarea.placeholder = question.placeholder || '';
-      textarea.value = state.answers[question.id]?.value || '';
+      textarea.value = getAnswer(question.id).value || '';
       textarea.addEventListener('input', (e) => setTextarea(question.id, e.target.value));
       container.appendChild(textarea);
 
@@ -923,6 +1042,51 @@ Las puertas quedan abiertas para cuando quiera volver.`;
       hint.textContent = 'Respuesta abierta.';
       container.appendChild(hint);
       return container;
+    }
+
+    function renderFollowup(question, followup) {
+      const answer = getAnswer(question.id);
+      const followupValue = answer.followups?.[followup.key] || '';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'followup-card';
+
+      const label = document.createElement('div');
+      label.className = 'field-label';
+      label.textContent = followup.label;
+      wrapper.appendChild(label);
+
+      if (followup.type === 'singleChoice') {
+        const container = document.createElement('div');
+        container.className = 'options';
+
+        followup.options.forEach(option => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'option' + (followupValue === option ? ' selected' : '');
+          btn.textContent = option;
+          btn.addEventListener('click', () => setFollowupChoice(question.id, followup.key, option));
+          container.appendChild(btn);
+        });
+
+        wrapper.appendChild(container);
+      }
+
+      if (followup.type === 'textarea') {
+        const textarea = document.createElement('textarea');
+        textarea.placeholder = followup.placeholder || '';
+        textarea.value = followupValue;
+        textarea.addEventListener('input', (e) => setFollowupTextarea(question.id, followup.key, e.target.value));
+        wrapper.appendChild(textarea);
+
+        if (!followup.required) {
+          const hint = document.createElement('div');
+          hint.className = 'hint';
+          hint.textContent = 'Opcional.';
+          wrapper.appendChild(hint);
+        }
+      }
+
+      return wrapper;
     }
 
     function renderQuestion() {
@@ -938,6 +1102,23 @@ Las puertas quedan abiertas para cuando quiera volver.`;
       if (question.type === 'textarea') node = renderTextarea(question);
 
       if (node) questionContent.appendChild(node);
+
+      const answer = getAnswer(question.id);
+      const visibleFollowups = (question.followUps || []).filter(followup => {
+        return typeof followup.showWhen === 'function' ? followup.showWhen(answer, question, state.answers) : true;
+      });
+
+      if (visibleFollowups.length) {
+        const wrap = document.createElement('div');
+        wrap.className = 'followup-wrap';
+
+        visibleFollowups.forEach(followup => {
+          wrap.appendChild(renderFollowup(question, followup));
+        });
+
+        questionContent.appendChild(wrap);
+      }
+
       updateProgress();
       setNextEnabled();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -957,18 +1138,31 @@ Las puertas quedan abiertas para cuando quiera volver.`;
 
       try {
         const payload = buildPayload();
-        gasForm.action = SUBMIT_ENDPOINT;
 
-        Object.entries(payload).forEach(([key, value]) => {
-          const input = gasForm.querySelector(`[name="${key}"]`);
-          if (input) input.value = value ?? '';
+        console.log('ENVIANDO A:', SUBMIT_ENDPOINT);
+        console.log('PAYLOAD:', payload);
+
+        const res = await fetch(SUBMIT_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
 
-        gasForm.submit();
+        const text = await res.text();
+
+        console.log('STATUS:', res.status);
+        console.log('RESPUESTA:', text);
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status} - ${text}`);
+        }
+
         saveStatus.textContent = 'Las respuestas se enviaron correctamente y también quedaron guardadas en este dispositivo.';
-        return { ok: true, mode: 'remote-form' };
+        return { ok: true, mode: 'remote' };
+
       } catch (err) {
         console.error('FALLO ENVÍO:', err);
+        alert('Falló el envío remoto: ' + err);
         saveStatus.textContent = 'No se pudo enviar automáticamente. Igual quedaron guardadas en este dispositivo y podés descargarlas abajo.';
         return { ok: false, mode: 'fallback' };
       }
@@ -979,7 +1173,7 @@ Las puertas quedan abiertas para cuando quiera volver.`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'respuestas-encuesta-hospedaje.json';
+      a.download = 'respuestas-encuesta-mayo.json';
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1027,7 +1221,9 @@ Las puertas quedan abiertas para cuando quiera volver.`;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    startBtn.addEventListener('click', () => goToQuestion(0));
+    startBtn.addEventListener('click', () => {
+      goToQuestion(0);
+    });
 
     nextBtn.addEventListener('click', async () => {
       if (!isCurrentAnswered()) return;
@@ -1039,7 +1235,9 @@ Las puertas quedan abiertas para cuando quiera volver.`;
     });
 
     backBtn.addEventListener('click', () => {
-      if (state.currentIndex > 0) goToQuestion(state.currentIndex - 1);
+      if (state.currentIndex > 0) {
+        goToQuestion(state.currentIndex - 1);
+      }
     });
 
     finishBtn.addEventListener('click', () => {
