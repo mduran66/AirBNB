@@ -626,7 +626,7 @@
   </div>
 
   <script>
-    const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbzhy7bBKAZq297nmUqg-BVOrDLiuU3T7VtO-lUJzwINuN8W70nFkabcqxtC6Xu2OzBe/exec";
+    const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/REEMPLAZA_CON_TU_URL/exec";
     const TARGET_SHEET_NAME = "Encuesta_Mayo";
     const HERO_IMAGE = "https://wallpapers.com/images/hd/argentina-obelisco-de-buenos-aires-xwngoqdki2worr6p.jpg";
     const HOST_PROFILE_IMAGE = "perfil.png";
@@ -916,13 +916,13 @@ Las puertas quedan abiertas para cuando quiera volver.`;
       renderQuestion();
     }
 
-    function setStars(questionId, rating, comment) {
+    function setStars(questionId, rating, comment, rerender = true) {
       const existing = getAnswer(questionId);
       setAnswerPatch(questionId, {
         rating,
         comment: typeof comment === 'string' ? comment : (existing.comment || '')
       });
-      renderQuestion();
+      if (rerender) renderQuestion();
     }
 
     function setTextarea(questionId, value) {
@@ -977,7 +977,7 @@ Las puertas quedan abiertas para cuando quiera volver.`;
         textarea.value = getAnswer(question.id).comment || '';
         textarea.addEventListener('input', (e) => {
           const rating = getAnswer(question.id).rating || 0;
-          setStars(question.id, rating, e.target.value);
+          setStars(question.id, rating, e.target.value, false);
         });
         wrapper.appendChild(textarea);
       }
