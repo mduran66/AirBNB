@@ -530,6 +530,7 @@
     <div class="save-toast-title">Respuesta guardada</div>
     <div class="save-toast-text">Tu respuesta se ha guardado con delicadeza ✨</div>
   </div>
+
   <div class="app">
     <div class="topbar" id="topbar">
       <button class="back-btn" id="backBtn" aria-label="Volver" disabled>
@@ -635,6 +636,7 @@
     const TARGET_SHEET_NAME = "Encuesta_Mayo";
     const HERO_IMAGE = "https://wallpapers.com/images/hd/argentina-obelisco-de-buenos-aires-xwngoqdki2worr6p.jpg";
     const HOST_PROFILE_IMAGE = "perfil.png";
+
     const HOST_REVIEW = `Huésped maravillosa, detallista y muy cuidadosa de todo.
 Cuidó tanto el departamento como al anfitrión y a su familia, a quienes dejó muy contentos con haberla conocido.
 Dejó todo siempre impecable y hasta organizó mejor la cocina; y nunca descuidó que la cama esté siempre perfectamente tendida (¡cómo debe ser!)
@@ -879,7 +881,7 @@ Las puertas quedan abiertas para cuando quiera volver.`;
       let total = 0;
       let done = 0;
 
-      QUESTIONS_LOOP: for (const question of questions) {
+      for (const question of questions) {
         total += 1;
         if (isMainAnswered(question)) done += 1;
 
@@ -916,9 +918,9 @@ Las puertas quedan abiertas para cuando quiera volver.`;
 
     function buildPayload() {
       return {
-        sheet_name: TARGET_SHEET_NAME,
         submitted_at: new Date().toISOString(),
         source: 'encuesta-airbnb-segunda-visita',
+        sheet_name: TARGET_SHEET_NAME,
         calificacion_estadia: getAnswer('estadiascore').rating || null,
         comentario_estadia: getAnswer('estadiascore').comment || '',
         sueno_general: getAnswer('sueno').value || '',
@@ -930,7 +932,8 @@ Las puertas quedan abiertas para cuando quiera volver.`;
         mejora_departamento: getAnswer('mejora').value || '',
         algo_no_ideal: getAnswer('noideal').value || '',
         momento_mas_en_casa: getAnswer('encasa').value || '',
-        balance_actividades: getAnswer('balance').value || '',        repetiria: getAnswer('repetir').value || '',
+        balance_actividades: getAnswer('balance').value || '',
+        repetiria: getAnswer('repetir').value || '',
         review_anfitrion: getAnswer('anfitrion').value || ''
       };
     }
@@ -1138,31 +1141,19 @@ Las puertas quedan abiertas para cuando quiera volver.`;
 
       try {
         const payload = buildPayload();
-
         console.log('ENVIANDO A:', SUBMIT_ENDPOINT);
         console.log('PAYLOAD:', payload);
 
-        const res = await fetch(SUBMIT_ENDPOINT, {
+        await fetch(SUBMIT_ENDPOINT, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          mode: 'no-cors',
+          body: new URLSearchParams(payload)
         });
 
-        const text = await res.text();
-
-        console.log('STATUS:', res.status);
-        console.log('RESPUESTA:', text);
-
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status} - ${text}`);
-        }
-
-        saveStatus.textContent = 'Las respuestas se enviaron correctamente y también quedaron guardadas en este dispositivo.';
+        saveStatus.textContent = 'Las respuestas se enviaron y también quedaron guardadas en este dispositivo.';
         return { ok: true, mode: 'remote' };
-
       } catch (err) {
         console.error('FALLO ENVÍO:', err);
-        alert('Falló el envío remoto: ' + err);
         saveStatus.textContent = 'No se pudo enviar automáticamente. Igual quedaron guardadas en este dispositivo y podés descargarlas abajo.';
         return { ok: false, mode: 'fallback' };
       }
