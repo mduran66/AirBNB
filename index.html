@@ -1,1243 +1,284 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Review del anfitrión</title>
-  <style>
-    :root {
-      --bg: #ffffff;
-      --text: #222222;
-      --muted: #6a6a6a;
-      --line: #ebebeb;
-      --brand: #ff385c;
-      --brand-soft: #fff1f3;
-      --card: #ffffff;
-      --shadow: 0 8px 30px rgba(0,0,0,0.08);
-      --radius: 24px;
-      --radius-sm: 16px;
-      --maxw: 760px;
-      --safe-top: max(16px, env(safe-area-inset-top));
-      --safe-bottom: max(16px, env(safe-area-inset-bottom));
-    }
-
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      min-height: 100%;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-    }
-
-    body {
-      display: flex;
-      justify-content: center;
-    }
-
-    .app {
-      width: 100%;
-      max-width: var(--maxw);
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      padding: var(--safe-top) 18px var(--safe-bottom);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 18px;
-      min-height: 40px;
-    }
-
-    .back-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: #fff;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      flex: 0 0 auto;
-      transition: transform .16s ease, background .16s ease;
-    }
-    .back-btn:active { transform: scale(.98); }
-    .back-btn[disabled] { opacity: 0; pointer-events: none; }
-
-    .progress-wrap {
-      flex: 1;
-      height: 6px;
-      background: #f2f2f2;
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .progress-bar {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #ff385c 0%, #ff5a7c 100%);
-      border-radius: inherit;
-      transition: width .32s ease;
-    }
-
-    .step-label {
-      font-size: 13px;
-      color: var(--muted);
-      white-space: nowrap;
-      min-width: 98px;
-      text-align: right;
-    }
-
-    .screen {
-      display: none;
-      flex: 1;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity .28s ease, transform .28s ease;
-    }
-
-    .screen.active {
-      display: flex;
-      flex-direction: column;
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .hero-card, .question-card, .result-card, .loader-card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 24px;
-    }
-
-    .hero {
-      display: grid;
-      gap: 20px;
-      align-content: center;
-      flex: 1;
-      padding: 10px 0 18px;
-    }
-
-    .hero-photo {
-      width: 100%;
-      aspect-ratio: 4 / 3;
-      border-radius: 28px;
-      overflow: hidden;
-      background: linear-gradient(135deg, #ffe6eb, #fff6f7);
-      border: 1px solid #f6d6dd;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-
-    .hero-photo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .hero-badge {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      background: rgba(255,255,255,.92);
-      backdrop-filter: blur(10px);
-      color: var(--text);
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 600;
-      box-shadow: 0 6px 20px rgba(0,0,0,.08);
-    }
-
-    .host-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 16px;
-    }
-
-    .host-avatar {
-      width: 56px;
-      height: 56px;
-      border-radius: 999px;
-      object-fit: cover;
-      border: 2px solid #fff;
-      box-shadow: 0 8px 24px rgba(0,0,0,.10);
-      flex: 0 0 auto;
-      background: #f2f2f2;
-    }
-
-    .host-meta {
-      display: grid;
-      gap: 2px;
-    }
-
-    .host-kicker {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .host-name {
-      font-size: 16px;
-      font-weight: 650;
-      color: var(--text);
-    }
-
-    h1, h2 {
-      margin: 0;
-      line-height: 1.1;
-      letter-spacing: -0.02em;
-    }
-
-    h1 {
-      font-size: clamp(32px, 6vw, 48px);
-      font-weight: 700;
-    }
-
-    h2 {
-      font-size: clamp(28px, 5vw, 38px);
-      font-weight: 650;
-    }
-
-    .lead {
-      margin: 0;
-      color: var(--muted);
-      font-size: 17px;
-      line-height: 1.5;
-    }
-
-    .question-wrap {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      padding: 8px 0 20px;
-    }
-
-    .question-card {
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-      min-height: 100%;
-    }
-
-    .question-eyebrow {
-      font-size: 14px;
-      color: var(--muted);
-      font-weight: 600;
-    }
-
-    .options {
-      display: grid;
-      gap: 12px;
-    }
-
-    .option {
-      width: 100%;
-      text-align: left;
-      border: 1px solid var(--line);
-      background: #fff;
-      border-radius: 18px;
-      padding: 18px 18px;
-      font-size: 16px;
-      color: var(--text);
-      cursor: pointer;
-      transition: border-color .18s ease, background .18s ease, transform .12s ease, box-shadow .18s ease;
-    }
-
-    .option:hover {
-      border-color: #d8d8d8;
-      box-shadow: 0 8px 24px rgba(0,0,0,.04);
-    }
-
-    .option:active { transform: scale(.995); }
-
-    .option.selected {
-      border-color: var(--brand);
-      background: var(--brand-soft);
-      box-shadow: 0 10px 24px rgba(255,56,92,.12);
-    }
-
-    .stars {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .star {
-      border: none;
-      background: transparent;
-      font-size: 42px;
-      line-height: 1;
-      cursor: pointer;
-      padding: 0;
-      color: #d7d7d7;
-      transition: transform .14s ease, color .14s ease;
-    }
-
-    .star.active {
-      color: var(--brand);
-    }
-
-    .star:active { transform: scale(.95); }
-
-    textarea {
-      width: 100%;
-      min-height: 124px;
-      resize: vertical;
-      border-radius: 18px;
-      border: 1px solid var(--line);
-      padding: 16px;
-      font: inherit;
-      color: var(--text);
-      outline: none;
-      transition: border-color .18s ease, box-shadow .18s ease;
-      background: #fff;
-    }
-
-    textarea:focus {
-      border-color: #cfcfcf;
-      box-shadow: 0 0 0 4px rgba(0,0,0,.03);
-    }
-
-    .field-label {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 10px;
-    }
-
-    .hint {
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: -10px;
-    }
-
-    .footer {
-      position: sticky;
-      bottom: 0;
-      margin-top: auto;
-      padding-top: 14px;
-      background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.92) 24%, #fff 56%);
-      backdrop-filter: blur(8px);
-    }
-
-    .footer-row {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .btn {
-      height: 56px;
-      border: none;
-      border-radius: 999px;
-      padding: 0 22px;
-      font-size: 16px;
-      font-weight: 650;
-      cursor: pointer;
-      transition: transform .12s ease, opacity .16s ease, box-shadow .18s ease, background .18s ease;
-    }
-
-    .btn:active { transform: scale(.99); }
-
-    .btn-primary {
-      background: var(--brand);
-      color: #fff;
-      box-shadow: 0 10px 24px rgba(255,56,92,.24);
-      flex: 1;
-    }
-
-    .btn-primary[disabled] {
-      opacity: .45;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    .btn-secondary {
-      background: #fff;
-      color: var(--text);
-      border: 1px solid var(--line);
-    }
-
-    .result-card, .loader-card {
-      margin: auto 0;
-    }
-
-    .review-box {
-      background: linear-gradient(180deg, #fff7f8 0%, #ffffff 100%);
-      border: 1px solid #ffd7e0;
-      border-radius: 22px;
-      padding: 22px;
-      line-height: 1.65;
-      font-size: 17px;
-      white-space: pre-line;
-    }
-
-    .chips {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .chip {
-      border-radius: 999px;
-      background: #f7f7f7;
-      padding: 10px 14px;
-      font-size: 13px;
-      color: #444;
-      border: 1px solid #efefef;
-    }
-
-    .loader-dots {
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .loader-dots span {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: var(--brand);
-      animation: pulse 1.1s infinite ease-in-out;
-      opacity: .4;
-    }
-    .loader-dots span:nth-child(2) { animation-delay: .15s; }
-    .loader-dots span:nth-child(3) { animation-delay: .30s; }
-
-    @keyframes pulse {
-      0%, 100% { transform: translateY(0); opacity: .35; }
-      50% { transform: translateY(-4px); opacity: 1; }
-    }
-
-    .confetti-layer {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: 999;
-    }
-
-    .confetti-piece {
-      position: absolute;
-      top: -12vh;
-      width: 10px;
-      height: 18px;
-      border-radius: 999px;
-      opacity: .95;
-      animation-name: confettiFall;
-      animation-timing-function: linear;
-      animation-fill-mode: forwards;
-      will-change: transform, opacity;
-    }
-
-    @keyframes confettiFall {
-      0% {
-        transform: translate3d(0, 0, 0) rotate(0deg);
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-      }
-      100% {
-        transform: translate3d(var(--drift, 0px), 115vh, 0) rotate(var(--spin, 360deg));
-        opacity: 0;
-      }
-    }
-
-    .save-toast {
-      position: fixed;
-      left: 50%;
-      bottom: calc(26px + env(safe-area-inset-bottom));
-      transform: translate(-50%, 20px);
-      width: min(calc(100% - 28px), 460px);
-      background: rgba(34,34,34,.94);
-      color: #fff;
-      border-radius: 20px;
-      padding: 16px 18px;
-      box-shadow: 0 18px 40px rgba(0,0,0,.22);
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .28s ease, transform .28s ease;
-      backdrop-filter: blur(10px);
-    }
-
-    .save-toast.show {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-
-    .save-toast-title {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .save-toast-text {
-      font-size: 14px;
-      line-height: 1.45;
-      color: rgba(255,255,255,.88);
-    }
-
-    .fine {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-
-    .hidden { display: none !important; }
-
-    .followup-wrap {
-      display: grid;
-      gap: 14px;
-      margin-top: 10px;
-      padding-top: 6px;
-    }
-
-    .followup-card {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 16px;
-      background: #fafafa;
-    }
-
-    @media (max-width: 560px) {
-      .app { padding-inline: 14px; }
-      .hero-card, .question-card, .result-card, .loader-card { padding: 20px; border-radius: 22px; }
-      .star { font-size: 38px; }
-      .option { padding: 16px; }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Encuesta</title>
+
+<style>
+body {
+  font-family: sans-serif;
+  background: #fff;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+}
+
+.progress {
+  height: 6px;
+  background: #eee;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: #ff385c;
+  transition: width .3s;
+}
+
+button {
+  padding: 12px;
+  margin-top: 10px;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+}
+
+button.selected {
+  border-color: #ff385c;
+  background: #fff1f3;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+</style>
 </head>
+
 <body>
-  <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-  <div class="save-toast" id="saveToast" aria-live="polite">
-    <div class="save-toast-title">Respuesta guardada</div>
-    <div class="save-toast-text">Tu respuesta se ha guardado con delicadeza ✨</div>
-  </div>
 
-  <div class="app">
-    <div class="topbar" id="topbar">
-      <button class="back-btn" id="backBtn" aria-label="Volver" disabled>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M15 18L9 12L15 6" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <div class="progress-wrap" aria-hidden="true">
-        <div class="progress-bar" id="progressBar"></div>
-      </div>
-      <div class="step-label" id="stepLabel"></div>
-    </div>
+<div class="container">
 
-    <section class="screen active" data-screen="intro">
-      <div class="hero">
-        <div class="hero-photo">
-          <img id="heroImage" src="https://wallpapers.com/images/hd/argentina-obelisco-de-buenos-aires-xwngoqdki2worr6p.jpg" alt="Portada de la experiencia" />
-          <div class="hero-badge">Nueva reseña disponible</div>
-        </div>
+<img src="perfil.png" width="60" style="border-radius:50%">
 
-        <div class="hero-card">
-          <div class="host-row">
-            <img class="host-avatar" id="hostAvatarIntro" alt="Foto del anfitrión" />
-            <div class="host-meta">
-              <div class="host-kicker">Anfitrión</div>
-              <div class="host-name">Mauri</div>
-            </div>
-          </div>
-          <h1>Tu anfitrión dejó una reseña sobre vos</h1>
-          <p class="lead">
-            Antes de verla, necesitamos una breve evaluación de tu experiencia de hospedaje, cowork y momentos compartidos.
-          </p>
-        </div>
-      </div>
+<h2 id="question"></h2>
 
-      <div class="footer">
-        <div class="footer-row">
-          <button class="btn btn-primary" id="startBtn">Ver reseña</button>
-        </div>
-      </div>
-    </section>
+<div class="progress">
+  <div class="progress-bar" id="bar"></div>
+</div>
 
-    <section class="screen" data-screen="question">
-      <div class="question-wrap">
-        <div class="question-card">
-          <div>
-            <div class="question-eyebrow" id="questionEyebrow">Pregunta</div>
-            <h2 id="questionTitle"></h2>
-          </div>
+<div id="options"></div>
 
-          <div id="questionContent"></div>
-        </div>
-      </div>
+<button id="next" disabled>Continuar</button>
 
-      <div class="footer">
-        <div class="footer-row">
-          <button class="btn btn-primary" id="nextBtn" disabled>Continuar</button>
-        </div>
-      </div>
-    </section>
+</div>
 
-    <section class="screen" data-screen="loader">
-      <div class="loader-card">
-        <div class="chips" style="margin-bottom: 18px;">
-          <span class="chip">Procesando feedback</span>
-          <span class="chip">Desbloqueando reseña</span>
-        </div>
-        <h2 style="margin-bottom: 10px;">Generando reseña del anfitrión…</h2>
-        <p class="lead" style="margin-bottom: 18px;">Un momento, estamos preparando el contenido final.</p>
-        <div class="loader-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-      </div>
-    </section>
+<script>
 
-    <section class="screen" data-screen="result">
-      <div class="result-card">
-        <div class="chips" style="margin-bottom: 18px;">
-          <span class="chip">Evaluación completada</span>
-          <span class="chip">Reseña desbloqueada</span>
-        </div>
-        <div class="host-row" style="margin-bottom: 18px;">
-          <img class="host-avatar" id="hostAvatarResult" alt="Foto del anfitrión" />
-          <div class="host-meta">
-            <div class="host-kicker">Review escrita por</div>
-            <div class="host-name">Mauri, tu anfitrión</div>
-          </div>
-        </div>
-        <h2 style="margin-bottom: 14px;">Review del anfitrión</h2>
-        <div class="review-box" id="reviewText">Cargando reseña…</div>
+const ENDPOINT = "TU_URL_APPS_SCRIPT_AQUI";
 
-        <div style="margin-top: 22px; display: grid; gap: 12px;">
-          <button class="btn btn-primary" id="finishBtn">Cerrar experiencia</button>
-          <button class="btn btn-secondary" id="downloadBtn">Descargar mis respuestas</button>
-          <div class="fine" id="saveStatus">
-            Las respuestas se guardan automáticamente. Si configurás un endpoint, también se enviarán para que el anfitrión las lea.
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
+const questions = [
 
-  <script>
-    const SUBMIT_ENDPOINT = "https://script.google.com/macros/s/AKfycbx-3jA2gvk2If2ANBPHy72CW0o-7AEkQUUnb1xreiG-r7a5E7uDV94W2MQP99N7dxVo/exec";
-    const TARGET_SHEET_NAME = "Encuesta_Mayo";
-    const HERO_IMAGE = "https://wallpapers.com/images/hd/argentina-obelisco-de-buenos-aires-xwngoqdki2worr6p.jpg";
-    const HOST_PROFILE_IMAGE = "perfil.png";
+{
+  id:"estadiascore",
+  title:"¿Cómo calificarías tu estadía?",
+  type:"stars"
+},
 
-    const HOST_REVIEW = `Huésped maravillosa, detallista y muy cuidadosa de todo.
-Cuidó tanto el departamento como al anfitrión y a su familia, a quienes dejó muy contentos con haberla conocido.
-Dejó todo siempre impecable y hasta organizó mejor la cocina; y nunca descuidó que la cama esté siempre perfectamente tendida (¡cómo debe ser!)
+{
+  id:"sueno",
+  title:"¿Cómo dormiste durante tu estadía?",
+  type:"choice",
+  options:[
+    "Dormí muy bien todas las noches",
+    "Dormí bien en general",
+    "Algunas noches no dormí bien",
+    "Dormí mal la mayoría de las noches"
+  ]
+},
 
-Cuando ella está, se siente como si estuviera siempre, la casa tiene más vida, más luz, más alegría, mas color, mas movimiento.
-Vivimos momentos simples que se volvieron especiales, entre cocina, manualidades, charlas y cowork con Claudio.
+{
+  id:"sueno_influencia",
+  title:"¿Creés que algo del departamento influyó?",
+  type:"choice",
+  depends:"sueno",
+  showIf:["Algunas noches no dormí bien","Dormí mal la mayoría de las noches"],
+  options:[
+    "Sí, definitivamente",
+    "Puede ser",
+    "No, fue por otros factores"
+  ]
+},
 
-Sin dudas, una huésped que uno quisiera recibir cada día.
-Las puertas quedan abiertas para cuando quiera volver.`;
+{
+  id:"cowork",
+  title:"¿Tu productividad fue similar a estar en tu casa?",
+  type:"choice",
+  options:[
+    "Si, la misma productividad",
+    "Similar, suficiente",
+    "Bien, con distracciones",
+    "Aceptable"
+  ]
+},
 
-    const questions = [
-      {
-        id: "estadiascore",
-        eyebrow: "Estadía general",
-        title: "¿Cómo calificarías tu estadía en el departamento?",
-        type: "starsWithComment",
-        placeholder: "Comentario adicional (opcional)"
-      },
-      {
-        id: "sueno",
-        eyebrow: "Descanso",
-        title: "¿Cómo dormiste durante tu estadía?",
-        type: "singleChoice",
-        options: [
-          "Dormí muy bien todas las noches",
-          "Dormí bien en general",
-          "Algunas noches no dormí bien",
-          "Dormí mal la mayoría de las noches"
-        ],
-        followUps: [
-          {
-            key: "sleep_influence",
-            type: "singleChoice",
-            label: "¿Creés que algo del departamento influyó en cómo dormiste?",
-            options: [
-              "Sí, definitivamente",
-              "Puede ser",
-              "No, fue por otros factores"
-            ],
-            required: true,
-            showWhen: (answer) => {
-              const main = answer?.value || "";
-              return ["Algunas noches no dormí bien", "Dormí mal la mayoría de las noches"].includes(main);
-            }
-          },
-          {
-            key: "sleep_detail",
-            type: "textarea",
-            label: "Si querés, contá qué pudo influir (opcional)",
-            placeholder: "Ruido, temperatura, colchón, luz, almohada...",
-            required: false,
-            showWhen: (answer) => {
-              const influence = answer?.followups?.sleep_influence || "";
-              return ["Sí, definitivamente", "Puede ser"].includes(influence);
-            }
-          }
-        ]
-      },
-      {
-        id: "cowork",
-        eyebrow: "Modo trabajo",
-        title: "Al trabajar ¿crees que pudiste tener productividad similar a estar en tu casa?",
-        type: "singleChoice",
-        options: [
-          "Si, la misma productividad que en casa",
-          "Similar, lo suficiente para estar conforme",
-          "Bien, aunque tuve algunas distracciones agradables 😄",
-          "Aceptable, pero podría haber algunos ajustes"
-        ]
-      },
-      {
-        id: "limpieza",
-        eyebrow: "Estado general",
-        title: "¿Cómo evaluarías la limpieza general del departamento?",
-        type: "stars"
-      },
-      {
-        id: "gustomas",
-        eyebrow: "Lo mejor de la experiencia",
-        title: "¿Qué opinas de la variedad de la comida en el departamento, tanto para desayuno/merienda y almuerzo /cena?",
-        type: "textarea",
-        placeholder: "Contá tu opinión sobre la comida y las opciones disponibles…"
-      },
-      {
-        id: "mejora",
-        eyebrow: "Ajustes posibles",
-        title: "Si tuvieras que mejorar algo del departamento, ¿qué sería?",
-        type: "textarea",
-        placeholder: "Podés escribir cualquier mejora, por pequeña que sea…"
-      },
-      {
-        id: "noideal",
-        eyebrow: "Pequeñas cosas",
-        title: "¿Hubo algo pequeño que no fue ideal, pero tampoco grave?",
-        type: "textarea",
-        placeholder: "Contalo con total honestidad…"
-      },
-      {
-        id: "encasa",
-        eyebrow: "Momento especial",
-        title: "¿En qué momento te sentiste más cómoda o más “en casa”?",
-        type: "textarea",
-        placeholder: "Podés contar una situación, un momento o una sensación…"
-      },
-      {
-        id: "balance",
-        eyebrow: "Próxima visita",
-        title: "Pensando en una próxima visita, ¿qué te gustaría ajustar?",
-        type: "singleChoice",
-        options: [
-          "Hacer más planes afuera",
-          "Hacer más planes tranquilos en el departamento",
-          "Mantenerlo igual"
-        ]
-      },
-      {
-        id: "anfitrion",
-        eyebrow: "Review del anfitrión",
-        title: "¿Cómo fue tu experiencia con el anfitrión?",
-        type: "textarea",
-        placeholder: "Este espacio está reservado para tu review más sincera…"
-      }
-    ];
+{
+  id:"limpieza",
+  title:"¿Cómo evaluás la limpieza?",
+  type:"stars"
+},
 
-    const state = {
-      currentIndex: -1,
-      answers: {}
+{
+  id:"comida",
+  title:"¿Qué opinás de la variedad de comida?",
+  type:"text"
+},
+
+{
+  id:"mejora",
+  title:"¿Qué mejorarías?",
+  type:"text"
+},
+
+{
+  id:"noideal",
+  title:"¿Algo no ideal?",
+  type:"text"
+},
+
+{
+  id:"encasa",
+  title:"¿Cuándo te sentiste más en casa?",
+  type:"text"
+},
+
+{
+  id:"balance",
+  title:"¿Qué ajustarías en una próxima visita?",
+  type:"choice",
+  options:[
+    "Más planes afuera",
+    "Más planes tranquilos",
+    "Mantener igual"
+  ]
+},
+
+{
+  id:"anfitrion",
+  title:"¿Cómo fue tu experiencia conmigo?",
+  type:"text"
+}
+
+];
+
+let i = 0;
+let answers = {};
+
+const q = document.getElementById("question");
+const opts = document.getElementById("options");
+const next = document.getElementById("next");
+const bar = document.getElementById("bar");
+
+function render(){
+
+  let current = questions[i];
+
+  // skip condicional
+  if(current.depends){
+    if(!current.showIf.includes(answers[current.depends])){
+      i++;
+      return render();
+    }
+  }
+
+  q.innerText = current.title;
+  opts.innerHTML = "";
+  next.disabled = true;
+
+  bar.style.width = ((i)/questions.length)*100 + "%";
+
+  if(current.type==="choice"){
+    current.options.forEach(o=>{
+      let b = document.createElement("button");
+      b.innerText = o;
+      b.onclick = ()=>{
+        answers[current.id] = o;
+        [...opts.children].forEach(c=>c.classList.remove("selected"));
+        b.classList.add("selected");
+        next.disabled=false;
+      };
+      opts.appendChild(b);
+    });
+  }
+
+  if(current.type==="text"){
+    let t = document.createElement("textarea");
+    t.oninput=()=>{
+      answers[current.id]=t.value;
+      next.disabled=false;
     };
+    opts.appendChild(t);
+  }
 
-    const screens = {
-      intro: document.querySelector('[data-screen="intro"]'),
-      question: document.querySelector('[data-screen="question"]'),
-      loader: document.querySelector('[data-screen="loader"]'),
-      result: document.querySelector('[data-screen="result"]')
-    };
-
-    const topbar = document.getElementById('topbar');
-    const progressBar = document.getElementById('progressBar');
-    const stepLabel = document.getElementById('stepLabel');
-    const backBtn = document.getElementById('backBtn');
-    const startBtn = document.getElementById('startBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const questionEyebrow = document.getElementById('questionEyebrow');
-    const questionTitle = document.getElementById('questionTitle');
-    const questionContent = document.getElementById('questionContent');
-    const reviewText = document.getElementById('reviewText');
-    const finishBtn = document.getElementById('finishBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const saveStatus = document.getElementById('saveStatus');
-    const confettiLayer = document.getElementById('confettiLayer');
-    const saveToast = document.getElementById('saveToast');
-    const heroImage = document.getElementById('heroImage');
-    const hostAvatarIntro = document.getElementById('hostAvatarIntro');
-    const hostAvatarResult = document.getElementById('hostAvatarResult');
-
-    const STORAGE_KEY = 'encuesta_airbnb_mayo_respuestas';
-
-    heroImage.src = HERO_IMAGE;
-    reviewText.textContent = HOST_REVIEW;
-    if (hostAvatarIntro) hostAvatarIntro.src = HOST_PROFILE_IMAGE;
-    if (hostAvatarResult) hostAvatarResult.src = HOST_PROFILE_IMAGE;
-
-    function showScreen(name) {
-      Object.values(screens).forEach(screen => screen.classList.remove('active'));
-      screens[name].classList.add('active');
-
-      const showTopbar = name === 'question';
-      topbar.style.visibility = showTopbar ? 'visible' : 'hidden';
-      topbar.style.pointerEvents = showTopbar ? 'auto' : 'none';
-    }
-
-    function getAnswer(questionId) {
-      return state.answers[questionId] || {};
-    }
-
-    function ensureAnswer(questionId) {
-      if (!state.answers[questionId]) {
-        state.answers[questionId] = {};
-      }
-      return state.answers[questionId];
-    }
-
-    function persistLocalDraft() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPayload()));
-    }
-
-    function setAnswerPatch(questionId, patch) {
-      const current = ensureAnswer(questionId);
-      state.answers[questionId] = {
-        ...current,
-        ...patch
+  if(current.type==="stars"){
+    for(let s=1;s<=5;s++){
+      let b = document.createElement("button");
+      b.innerText = "⭐".repeat(s);
+      b.onclick=()=>{
+        answers[current.id]=s;
+        next.disabled=false;
       };
-      persistLocalDraft();
+      opts.appendChild(b);
     }
+  }
+}
+
+next.onclick = async ()=>{
+  i++;
+
+  if(i>=questions.length){
+    await send();
+    alert("Listo ❤️");
+    return;
+  }
+
+  render();
+};
+
+async function send(){
+
+  const payload = {
+    submitted_at: new Date().toISOString(),
+    source: "encuesta-airbnb",
+    sheet_name: "Encuesta_Mayo",
+    calificacion_estadia: answers.estadiascore,
+    comentario_estadia: "",
+    sueno_general: answers.sueno,
+    sueno_influyo_departamento: answers.sueno_influencia,
+    sueno_detalle: "",
+    productividad_hogar: answers.cowork,
+    limpieza: answers.limpieza,
+    variedad_comida: answers.comida,
+    mejora_departamento: answers.mejora,
+    algo_no_ideal: answers.noideal,
+    momento_mas_en_casa: answers.encasa,
+    balance_actividades: answers.balance,
+    repetiria: "",
+    review_anfitrion: answers.anfitrion
+  };
+
+  await fetch(ENDPOINT, {
+    method:"POST",
+    body: new URLSearchParams(payload)
+  });
+
+}
+
+render();
+
+</script>
 
-    function setFollowupValue(questionId, key, value) {
-      const current = ensureAnswer(questionId);
-      state.answers[questionId] = {
-        ...current,
-        followups: {
-          ...(current.followups || {}),
-          [key]: value
-        }
-      };
-      persistLocalDraft();
-    }
-
-    function isMainAnswered(question) {
-      const answer = getAnswer(question.id);
-
-      if (question.type === 'stars' || question.type === 'starsWithComment') {
-        return !!answer.rating;
-      }
-      if (question.type === 'singleChoice' || question.type === 'textarea') {
-        return typeof answer.value === 'string' && answer.value.trim().length > 0;
-      }
-      return false;
-    }
-
-    function isFollowupAnswered(questionId, followup) {
-      const answer = getAnswer(questionId);
-      const value = answer.followups?.[followup.key];
-
-      if (followup.type === 'singleChoice') {
-        return typeof value === 'string' && value.trim().length > 0;
-      }
-      if (followup.type === 'textarea') {
-        return typeof value === 'string' && value.trim().length > 0;
-      }
-      return false;
-    }
-
-    function getVisibleRequiredFollowups(question) {
-      const answer = getAnswer(question.id);
-      return (question.followUps || []).filter(followup => {
-        const visible = typeof followup.showWhen === 'function' ? followup.showWhen(answer, question, state.answers) : true;
-        return visible && followup.required;
-      });
-    }
-
-    function getProgressStats() {
-      let total = 0;
-      let done = 0;
-
-      for (const question of questions) {
-        total += 1;
-        if (isMainAnswered(question)) done += 1;
-
-        const visibleRequiredFollowups = getVisibleRequiredFollowups(question);
-        for (const followup of visibleRequiredFollowups) {
-          total += 1;
-          if (isFollowupAnswered(question.id, followup)) done += 1;
-        }
-      }
-
-      return { total, done };
-    }
-
-    function updateProgress() {
-      const { total, done } = getProgressStats();
-      const progress = total ? (done / total) * 100 : 0;
-      progressBar.style.width = `${progress}%`;
-      stepLabel.textContent = `${done}/${total} respondidas`;
-      backBtn.disabled = state.currentIndex <= 0;
-    }
-
-    function isCurrentAnswered() {
-      const question = questions[state.currentIndex];
-      if (!question) return false;
-      if (!isMainAnswered(question)) return false;
-
-      const requiredFollowups = getVisibleRequiredFollowups(question);
-      return requiredFollowups.every(followup => isFollowupAnswered(question.id, followup));
-    }
-
-    function setNextEnabled() {
-      nextBtn.disabled = !isCurrentAnswered();
-    }
-
-    function buildPayload() {
-      return {
-        submitted_at: new Date().toISOString(),
-        source: 'encuesta-airbnb-segunda-visita',
-        sheet_name: TARGET_SHEET_NAME,
-        calificacion_estadia: getAnswer('estadiascore').rating || null,
-        comentario_estadia: getAnswer('estadiascore').comment || '',
-        sueno_general: getAnswer('sueno').value || '',
-        sueno_influyo_departamento: getAnswer('sueno').followups?.sleep_influence || '',
-        sueno_detalle: getAnswer('sueno').followups?.sleep_detail || '',
-        productividad_hogar: getAnswer('cowork').value || '',
-        limpieza: getAnswer('limpieza').rating || null,
-        variedad_comida: getAnswer('gustomas').value || '',
-        mejora_departamento: getAnswer('mejora').value || '',
-        algo_no_ideal: getAnswer('noideal').value || '',
-        momento_mas_en_casa: getAnswer('encasa').value || '',
-        balance_actividades: getAnswer('balance').value || '',
-        repetiria: getAnswer('repetir').value || '',
-        review_anfitrion: getAnswer('anfitrion').value || ''
-      };
-    }
-
-    function selectChoice(questionId, value) {
-      setAnswerPatch(questionId, { value });
-      renderQuestion();
-    }
-
-    function setStars(questionId, rating, comment) {
-      const existing = getAnswer(questionId);
-      setAnswerPatch(questionId, {
-        rating,
-        comment: typeof comment === 'string' ? comment : (existing.comment || '')
-      });
-      renderQuestion();
-    }
-
-    function setTextarea(questionId, value) {
-      setAnswerPatch(questionId, { value });
-      updateProgress();
-      setNextEnabled();
-    }
-
-    function setFollowupChoice(questionId, key, value) {
-      setFollowupValue(questionId, key, value);
-      renderQuestion();
-    }
-
-    function setFollowupTextarea(questionId, key, value) {
-      setFollowupValue(questionId, key, value);
-      updateProgress();
-      setNextEnabled();
-    }
-
-    function renderStars(question, withComment = false) {
-      const wrapper = document.createElement('div');
-      wrapper.style.display = 'grid';
-      wrapper.style.gap = '16px';
-
-      const stars = document.createElement('div');
-      stars.className = 'stars';
-      const currentRating = getAnswer(question.id).rating || 0;
-
-      for (let i = 1; i <= 5; i++) {
-        const btn = document.createElement('button');
-        btn.className = 'star' + (i <= currentRating ? ' active' : '');
-        btn.type = 'button';
-        btn.textContent = '★';
-        btn.setAttribute('aria-label', `${i} estrellas`);
-        btn.addEventListener('click', () => {
-          const comment = getAnswer(question.id).comment || '';
-          setStars(question.id, i, comment);
-        });
-        stars.appendChild(btn);
-      }
-
-      wrapper.appendChild(stars);
-
-      if (withComment) {
-        const label = document.createElement('div');
-        label.className = 'field-label';
-        label.textContent = 'Comentario adicional (opcional)';
-        wrapper.appendChild(label);
-
-        const textarea = document.createElement('textarea');
-        textarea.placeholder = question.placeholder || '';
-        textarea.value = getAnswer(question.id).comment || '';
-        textarea.addEventListener('input', (e) => {
-          const rating = getAnswer(question.id).rating || 0;
-          setStars(question.id, rating, e.target.value);
-        });
-        wrapper.appendChild(textarea);
-      }
-
-      return wrapper;
-    }
-
-    function renderSingleChoice(question) {
-      const container = document.createElement('div');
-      container.className = 'options';
-      const selected = getAnswer(question.id).value;
-
-      question.options.forEach(option => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'option' + (selected === option ? ' selected' : '');
-        btn.textContent = option;
-        btn.addEventListener('click', () => selectChoice(question.id, option));
-        container.appendChild(btn);
-      });
-
-      return container;
-    }
-
-    function renderTextarea(question) {
-      const container = document.createElement('div');
-      container.style.display = 'grid';
-      container.style.gap = '12px';
-
-      const textarea = document.createElement('textarea');
-      textarea.placeholder = question.placeholder || '';
-      textarea.value = getAnswer(question.id).value || '';
-      textarea.addEventListener('input', (e) => setTextarea(question.id, e.target.value));
-      container.appendChild(textarea);
-
-      const hint = document.createElement('div');
-      hint.className = 'hint';
-      hint.textContent = 'Respuesta abierta.';
-      container.appendChild(hint);
-      return container;
-    }
-
-    function renderFollowup(question, followup) {
-      const answer = getAnswer(question.id);
-      const followupValue = answer.followups?.[followup.key] || '';
-      const wrapper = document.createElement('div');
-      wrapper.className = 'followup-card';
-
-      const label = document.createElement('div');
-      label.className = 'field-label';
-      label.textContent = followup.label;
-      wrapper.appendChild(label);
-
-      if (followup.type === 'singleChoice') {
-        const container = document.createElement('div');
-        container.className = 'options';
-
-        followup.options.forEach(option => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'option' + (followupValue === option ? ' selected' : '');
-          btn.textContent = option;
-          btn.addEventListener('click', () => setFollowupChoice(question.id, followup.key, option));
-          container.appendChild(btn);
-        });
-
-        wrapper.appendChild(container);
-      }
-
-      if (followup.type === 'textarea') {
-        const textarea = document.createElement('textarea');
-        textarea.placeholder = followup.placeholder || '';
-        textarea.value = followupValue;
-        textarea.addEventListener('input', (e) => setFollowupTextarea(question.id, followup.key, e.target.value));
-        wrapper.appendChild(textarea);
-
-        if (!followup.required) {
-          const hint = document.createElement('div');
-          hint.className = 'hint';
-          hint.textContent = 'Opcional.';
-          wrapper.appendChild(hint);
-        }
-      }
-
-      return wrapper;
-    }
-
-    function renderQuestion() {
-      const question = questions[state.currentIndex];
-      questionEyebrow.textContent = question.eyebrow;
-      questionTitle.textContent = question.title;
-      questionContent.innerHTML = '';
-
-      let node = null;
-      if (question.type === 'stars') node = renderStars(question, false);
-      if (question.type === 'starsWithComment') node = renderStars(question, true);
-      if (question.type === 'singleChoice') node = renderSingleChoice(question);
-      if (question.type === 'textarea') node = renderTextarea(question);
-
-      if (node) questionContent.appendChild(node);
-
-      const answer = getAnswer(question.id);
-      const visibleFollowups = (question.followUps || []).filter(followup => {
-        return typeof followup.showWhen === 'function' ? followup.showWhen(answer, question, state.answers) : true;
-      });
-
-      if (visibleFollowups.length) {
-        const wrap = document.createElement('div');
-        wrap.className = 'followup-wrap';
-
-        visibleFollowups.forEach(followup => {
-          wrap.appendChild(renderFollowup(question, followup));
-        });
-
-        questionContent.appendChild(wrap);
-      }
-
-      updateProgress();
-      setNextEnabled();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function goToQuestion(index) {
-      state.currentIndex = index;
-      showScreen('question');
-      renderQuestion();
-    }
-
-    async function submitIfConfigured() {
-      if (!SUBMIT_ENDPOINT) {
-        saveStatus.textContent = 'Las respuestas quedaron guardadas en este dispositivo. También podés descargarlas con el botón de abajo.';
-        return { ok: true, mode: 'local' };
-      }
-
-      try {
-        const payload = buildPayload();
-        console.log('ENVIANDO A:', SUBMIT_ENDPOINT);
-        console.log('PAYLOAD:', payload);
-
-        await fetch(SUBMIT_ENDPOINT, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: new URLSearchParams(payload)
-        });
-
-        saveStatus.textContent = 'Las respuestas se enviaron y también quedaron guardadas en este dispositivo.';
-        return { ok: true, mode: 'remote' };
-      } catch (err) {
-        console.error('FALLO ENVÍO:', err);
-        saveStatus.textContent = 'No se pudo enviar automáticamente. Igual quedaron guardadas en este dispositivo y podés descargarlas abajo.';
-        return { ok: false, mode: 'fallback' };
-      }
-    }
-
-    function downloadAnswers() {
-      const blob = new Blob([JSON.stringify(buildPayload(), null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'respuestas-encuesta-mayo.json';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function launchConfettiBurst() {
-      const pieces = 28;
-      for (let i = 0; i < pieces; i++) {
-        const piece = document.createElement('div');
-        piece.className = 'confetti-piece';
-        piece.style.left = `${Math.random() * 100}%`;
-        piece.style.animationDuration = `${3 + Math.random() * 1.7}s`;
-        piece.style.animationDelay = `${Math.random() * 0.18}s`;
-        piece.style.setProperty('--drift', `${-90 + Math.random() * 180}px`);
-        piece.style.setProperty('--spin', `${220 + Math.random() * 780}deg`);
-        const hue = [340, 350, 12, 28, 42][Math.floor(Math.random() * 5)];
-        const light = 60 + Math.floor(Math.random() * 12);
-        piece.style.background = `hsl(${hue} 90% ${light}%)`;
-        confettiLayer.appendChild(piece);
-        piece.addEventListener('animationend', () => piece.remove());
-      }
-    }
-
-    let toastTimer = null;
-    function showSaveToast() {
-      clearTimeout(toastTimer);
-      saveToast.classList.add('show');
-      toastTimer = setTimeout(() => {
-        saveToast.classList.remove('show');
-      }, 2200);
-    }
-
-    function celebrateSave() {
-      launchConfettiBurst();
-      showSaveToast();
-    }
-
-    async function finishSurvey() {
-      showScreen('loader');
-      await submitIfConfigured();
-      await new Promise(resolve => setTimeout(resolve, 1800));
-      showScreen('result');
-      celebrateSave();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    startBtn.addEventListener('click', () => {
-      goToQuestion(0);
-    });
-
-    nextBtn.addEventListener('click', async () => {
-      if (!isCurrentAnswered()) return;
-      if (state.currentIndex < questions.length - 1) {
-        goToQuestion(state.currentIndex + 1);
-      } else {
-        await finishSurvey();
-      }
-    });
-
-    backBtn.addEventListener('click', () => {
-      if (state.currentIndex > 0) {
-        goToQuestion(state.currentIndex - 1);
-      }
-    });
-
-    finishBtn.addEventListener('click', () => {
-      alert('Experiencia finalizada 💖');
-    });
-
-    downloadBtn.addEventListener('click', downloadAnswers);
-
-    showScreen('intro');
-  </script>
 </body>
 </html>
